@@ -89,6 +89,21 @@
 
 ## 快速开始
 
+### 直接下载安装（推荐给使用者）
+
+到 [**Releases**](https://github.com/Stellum-Waq/docforge/releases/latest) 下载：
+
+| 文件 | 说明 |
+|---|---|
+| `DocForge-0.1.0-Setup-x64.exe` | 安装版：可选安装目录、快捷方式、PDF/Word/Excel 文件关联 |
+| `DocForge-0.1.0-Portable-x64.exe` | 便携版：双击即用，数据放在 exe 旁，U 盘换机也能带走预设与历史 |
+
+两版都已内置 Python 内核与全部依赖（PDF 引擎、OCR 模型、Office 自动化），
+**下载后无需再装任何东西**。安装包未做代码签名，SmartScreen 可能提示"未知发布者"，
+可用 Release 页里的 SHA256 核对完整性。
+
+### 从源码运行（开发者）
+
 ```bash
 # 1) 前端依赖（Electron 二进制较大，走国内镜像）
 pnpm install
@@ -101,9 +116,6 @@ core/.venv/Scripts/python.exe -m pip install -r core/requirements.txt        # W
 # 3) 开发模式启动（Electron 会自动拉起 Python 内核）
 pnpm dev
 ```
-
-> 只想跑起来看看、不打算改代码的话，直接下安装包更省事：
-> `pnpm package:win` 产出的安装包/便携版里已经带齐了内核与全部依赖。
 
 > 本地离线 OCR 的 ONNX 运行时占了绝大部分体积，用不上的话可以从
 > `core/requirements.txt` 里删掉「本地离线 OCR」那一组（详见文件内注释）；
