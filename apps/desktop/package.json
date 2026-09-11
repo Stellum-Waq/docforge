@@ -1,0 +1,43 @@
+{
+  "name": "@docforge/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "文枢 DocForge 桌面应用（Electron 壳）",
+  "main": "./out/main/index.js",
+  "author": "DocForge",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "electron-vite build",
+    "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
+    "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
+    "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web",
+    "build:win": "electron-vite build && electron-builder --win --config electron-builder.yml"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.102.8",
+    "@tanstack/react-virtual": "3.14.11",
+    "clsx": "2.1.1",
+    "lucide-react": "1.44.0",
+    "motion": "13.2.0",
+    "pdfjs-dist": "6.3.289",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwind-merge": "3.4.1",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@swc/core": "1.15.21",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "docforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "文枢 DocForge — 办公文件转换与处理工具",
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @docforge/desktop dev",
+    "build": "pnpm --filter @docforge/desktop build",
+    "typecheck": "pnpm --filter @docforge/desktop typecheck",
+    "core:venv": "python -m venv core\\.venv",
+    "core:install": "core\\.venv\\Scripts\\python.exe -m pip install -r core\\requirements.txt",
+    "core:dev": "core\\.venv\\Scripts\\python.exe -m docforge --dev",
+    "core:test": "core\\.venv\\Scripts\\python.exe -m pytest core\\tests -q",
+    "icon": "core\\.venv\\Scripts\\python.exe tools\\make_icon.py",
+    "package:core": "core\\.venv\\Scripts\\python.exe -m PyInstaller --noconfirm --clean --distpath core\\dist --workpath .cache\\pyinstaller apps\\desktop\\build\\core.spec",
+    "package:win": "pnpm icon && pnpm package:core && pnpm --filter @docforge/desktop build:win",
+    "smoke": "core\\.venv\\Scripts\\python.exe tools\\smoke_test.py",
+    "probe": "core\\.venv\\Scripts\\python.exe tools\\probe.py"
+  }
+}

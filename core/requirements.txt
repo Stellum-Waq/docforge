@@ -1,0 +1,21 @@
+# 文枢 DocForge — Python 内核运行依赖
+# 安装：core/.venv/Scripts/python.exe -m pip install -r core/requirements.txt
+
+# ---- Web 服务层 ----
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9
+pydantic-settings>=2.6
+python-multipart>=0.0.12
+
+# ---- 通用 ----
+httpx>=0.27          # DeepSeek Vision 调用（异步）
+aiosqlite>=0.20      # 任务/历史/缓存持久化
+psutil>=6.1          # 系统能力探测
+
+# ---- 图像 ----
+Pillow>=11.0
+# 本地 OCR（离线，无需 PyTorch）—— 对应需求 8 的"保留本地部署选项"
+# 首次启用本地 OCR 时按需安装：
+#   rapidocr-onnxruntime onnxruntime opencv-python-headless numpy
+# 体积较大（约 200MB），因此不放在基础依赖里强制安装。

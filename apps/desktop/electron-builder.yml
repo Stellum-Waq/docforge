@@ -1,0 +1,73 @@
+appId: com.docforge.desktop
+productName: 文枢 DocForge
+copyright: Copyright © 2026 DocForge
+
+directories:
+  output: release
+  buildResources: build
+
+# 复用已经装好的 Electron 二进制，不让 electron-builder 再去下载一份。
+#
+# 绕开的其实是 electron-builder 26.15.x 的一个上游缺陷：app-builder-lib 的
+# electronGet.js 引用了 `@electron/get` 的 `ElectronDownloadCacheMode` 导出，
+# 而它自己声明的依赖范围是 `^3.0.0`，那个版本里并没有这个导出 ——
+# 结果打包时直接抛 `Cannot read properties of undefined (reading 'ReadWrite')`。
+# 指向本地已有的 dist 既能绕过它，也省掉一次几百 MB 的重复下载。
+electronDist: node_modules/electron/dist
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+
+# Python 内核（PyInstaller onedir 产物）随包分发，放在 resources/core 下。
+# 开发期该目录不存在，构建时用 filter 容错跳过。
+extraResources:
+  - from: ../../core/dist/docforge-core
+    to: core
+    filter:
+      - '**/*'
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  # 让 Windows 明确这是应用而不是控制台程序
+  requestedExecutionLevel: asInvoker
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 文枢 DocForge
+  # 卸载时保留用户的任务历史与预设
+  deleteAppDataOnUninstall: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+
+portable:
+  artifactName: ${productName}-便携版-${version}.${ext}
+
+# 文件关联：双击 PDF/图片即可用本工具打开（对应需求 7 的便利导入）
+fileAssociations:
+  - ext: pdf
+    name: PDF 文档
+    description: 使用文枢 DocForge 打开 PDF
+    icon: build/icon.ico
+  - ext: docx
+    name: Word 文档
+    description: 使用文枢 DocForge 打开 Word 文档
+    icon: build/icon.ico
+  - ext: xlsx
+    name: Excel 工作簿
+    description: 使用文枢 DocForge 打开 Excel 工作簿
+    icon: build/icon.ico
+
+publish: null

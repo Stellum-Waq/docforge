@@ -1,0 +1,30 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm 11 默认拦截依赖的 postinstall 脚本（供应链安全）。这里逐项放行：
+#   electron  —— 必须放行：postinstall 负责下载对应平台的运行时二进制，
+#                不放行就没有 dist/electron.exe，应用根本起不来。
+#   esbuild   —— 不需要：平台二进制通过 optionalDependencies(@esbuild/win32-x64) 下发，
+#                postinstall 只是做校验，关掉可减少供应链攻击面。
+#   @swc/core —— 同上，二进制由 @swc/core-win32-x64-msvc 提供。
+#   electron-winstaller —— 仅 Squirrel.Windows 目标需要（还依赖 .NET）；
+#                本项目用 NSIS + portable，关掉。
+allowBuilds:
+  electron: true
+  esbuild: false
+  '@swc/core': false
+  electron-winstaller: false
+
+minimumReleaseAgeExclude:
+  - lucide-react@1.44.0
+
+patchedDependencies:
+  # 修补 electron-builder 26.15.x 的一个上游缺陷：
+  # app-builder-lib 的 out/util/electronGet.js 引用了 `@electron/get` 的
+  # `ElectronDownloadCacheMode` 导出，但它声明的依赖范围是 `^3.0.0`，
+  # 而那个版本并没有这个导出。结果是**任何工具链下载都会崩**
+  # （Electron 本体、NSIS、winCodeSign 全中），
+  # 报 `Cannot read properties of undefined (reading 'ReadWrite')`，打包完全走不下去。
+  # 补丁只在枚举缺失时退回等价数值（ReadWrite = 1），不改变原有行为。
+  app-builder-lib@26.15.3: patches/app-builder-lib@26.15.3.patch

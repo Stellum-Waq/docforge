@@ -1,0 +1,311 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   文枢 DocForge — 设计令牌
+   对应设计文档 §2.5「UI 视觉语言」：深空底色 + 极光渐变 + 玻璃拟态。
+   所有颜色、间距、动效曲线都在这里集中定义，组件只引用语义化变量。
+   ========================================================================== */
+
+@theme {
+  /* --- 深空基底 --- */
+  --color-abyss: #05070d;
+  --color-void: #080b14;
+  --color-panel: #0b0f1a;
+  --color-panel-2: #111726;
+  --color-panel-3: #182034;
+  --color-hairline: #1e2740;
+
+  /* --- 极光主色 --- */
+  --color-aurora-cyan: #22d3ee;
+  --color-aurora-blue: #38bdf8;
+  --color-aurora-violet: #a855f7;
+  --color-aurora-magenta: #f0abfc;
+
+  /* --- 状态色 --- */
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  --color-err: #fb7185;
+  --color-run: #38bdf8;
+  --color-idle: #64748b;
+
+  /* --- 文本层级 --- */
+  --color-ink: #e8edf7;
+  --color-ink-2: #a8b3c9;
+  --color-ink-3: #6b7893;
+  --color-ink-4: #47536b;
+
+  /* --- 字体 --- */
+  --font-sans:
+    'Inter', 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI', 'PingFang SC',
+    system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', ui-monospace, monospace;
+
+  /* --- 动效曲线 --- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ==========================================================================
+   基础层
+   ========================================================================== */
+
+@layer base {
+  * {
+    /* 桌面应用不需要文本选择光标到处出现，交互元素单独开启 */
+    -webkit-user-drag: none;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--color-abyss);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 细滚动条，融进深色主题 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-hairline) 90%, white 10%);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--color-aurora-cyan) 45%, var(--color-hairline));
+    background-clip: content-box;
+  }
+
+  /* 可选中文本（日志、路径等需要复制） */
+  .selectable {
+    user-select: text;
+    cursor: text;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-aurora-cyan);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+/* ==========================================================================
+   组件层：玻璃拟态与发光效果
+   ========================================================================== */
+
+@layer components {
+  /* 玻璃卡片：背景模糊 + 渐变描边 + 内高光，是"高级感"的核心材质 */
+  .glass {
+    position: relative;
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--color-panel-2) 78%, transparent),
+      color-mix(in oklab, var(--color-panel) 88%, transparent)
+    );
+    backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid color-mix(in oklab, var(--color-hairline) 70%, transparent);
+    border-radius: 16px;
+  }
+
+  /* 顶部 1px 高光，模拟光线从上方掠过 */
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--color-aurora-cyan) 55%, transparent),
+      color-mix(in oklab, var(--color-aurora-violet) 45%, transparent),
+      transparent
+    );
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .glass-flat {
+    background: color-mix(in oklab, var(--color-panel) 70%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-hairline) 60%, transparent);
+    border-radius: 12px;
+  }
+
+  /* 极光文字渐变 */
+  .text-aurora {
+    background: linear-gradient(
+      100deg,
+      var(--color-aurora-cyan),
+      var(--color-aurora-blue) 35%,
+      var(--color-aurora-violet) 70%,
+      var(--color-aurora-magenta)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* 发光边缘按钮 */
+  .btn-glow {
+    position: relative;
+    background: linear-gradient(
+      120deg,
+      color-mix(in oklab, var(--color-aurora-cyan) 22%, var(--color-panel-2)),
+      color-mix(in oklab, var(--color-aurora-violet) 22%, var(--color-panel-2))
+    );
+    border: 1px solid color-mix(in oklab, var(--color-aurora-cyan) 40%, transparent);
+    transition:
+      box-shadow 240ms var(--ease-out-expo),
+      transform 240ms var(--ease-out-expo);
+  }
+  .btn-glow:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-aurora-cyan) 55%, transparent),
+      0 8px 32px -8px color-mix(in oklab, var(--color-aurora-cyan) 65%, transparent);
+    transform: translateY(-1px);
+  }
+  .btn-glow:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  /* 网格地平线背景 */
+  .grid-floor {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--color-aurora-cyan) 7%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--color-aurora-cyan) 7%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 44px 44px;
+  }
+
+  /* 无边框窗口的拖拽区域 */
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* ==========================================================================
+   动效层
+   纪律：只动 transform / opacity，全部走合成层，避免触发布局重排。
+   ========================================================================== */
+
+@layer utilities {
+  @keyframes df-scan {
+    0% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    12% {
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh);
+      opacity: 0;
+    }
+  }
+
+  @keyframes df-pulse-ring {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.9;
+    }
+    70% {
+      transform: scale(2.1);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(2.1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes df-shimmer {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(220%);
+    }
+  }
+
+  @keyframes df-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes df-spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .anim-scan {
+    animation: df-scan 7s linear infinite;
+  }
+  .anim-pulse-ring {
+    animation: df-pulse-ring 2.4s var(--ease-out-expo) infinite;
+  }
+  .anim-float {
+    animation: df-float 4s ease-in-out infinite;
+  }
+  .anim-spin-slow {
+    animation: df-spin-slow 18s linear infinite;
+  }
+  /* 骨架屏/加载态的光带扫过 */
+  .anim-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--color-aurora-cyan) 18%, transparent),
+      transparent
+    );
+    animation: df-shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+/* 尊重系统的"减少动态效果"设置（无障碍要求） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

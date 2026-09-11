@@ -1,0 +1,33 @@
+diff --git a/out/util/electronGet.js b/out/util/electronGet.js
+index a941f9d20c10ca58a84b9a600b0df468631aae01..76daf78ce5d5ca9637f581f67127f8ff24428dd6 100644
+--- a/out/util/electronGet.js
++++ b/out/util/electronGet.js
+@@ -59,14 +59,26 @@ function getCacheDirectory(options) {
+ }
+ function resolveCacheMode() {
+     var _a;
++    // PATCH(docforge): app-builder-lib 26.15.x 在这里引用了
++    // `@electron/get` 的 `ElectronDownloadCacheMode` 导出，但它自己声明的
++    // 依赖范围是 `^3.0.0`，而那个版本并没有这个导出 —— 结果任何工具链下载
++    // （Electron 本体、NSIS、winCodeSign）都会直接抛
++    // `Cannot read properties of undefined (reading 'ReadWrite')`，打包完全走不下去。
++    //
++    // 这里在枚举缺失时退回等价数值（ReadWrite = 1），不改变原有行为；
++    // 枚举存在时（例如将来 @electron/get 升级后）仍走原逻辑。
++    const cacheModeEnum = get_1.ElectronDownloadCacheMode;
++    if (!cacheModeEnum) {
++        return 1;
++    }
+     const varName = "ELECTRON_DOWNLOAD_CACHE_MODE";
+     const cacheOverride = (_a = process.env[varName]) === null || _a === void 0 ? void 0 : _a.trim();
+-    if (cacheOverride && Number(cacheOverride) in get_1.ElectronDownloadCacheMode) {
++    if (cacheOverride && Number(cacheOverride) in cacheModeEnum) {
+         const mode = Number(cacheOverride);
+         builder_util_1.log.debug({ mode }, `cache mode overridden via env var ${varName}`);
+         return mode;
+     }
+-    return get_1.ElectronDownloadCacheMode.ReadWrite;
++    return cacheModeEnum.ReadWrite !== undefined ? cacheModeEnum.ReadWrite : 1;
+ }
+ async function extractZipStreaming(file, dir) {
+     var _a;

@@ -1,0 +1,37 @@
+# ---- 依赖与构建产物 ----
+node_modules/
+.pnpm-store/
+out/
+dist/
+release/
+*.tsbuildinfo
+
+# ---- Python 内核 ----
+core/.venv/
+core/dist/
+core/build/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+core/tests/.pytest-data/
+
+# ---- PyInstaller / electron-builder 中间产物 ----
+.cache/
+
+# ---- 本地数据与试跑产物 ----
+.docforge-data/
+core/.docforge-data/
+docforge-output/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+
+# ---- 环境变量与密钥 ----
+# 绝不要把 API Key 提交进仓库（内核用 Windows DPAPI 加密存储，不进仓库）
+.env
+.env.local
+*.key

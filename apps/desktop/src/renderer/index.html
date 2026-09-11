@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      CSP 说明：
+      · connect-src 放开 127.0.0.1:*  —— 渲染进程需要访问本地 Python 内核（随机端口）
+      · ws://localhost:*                —— Vite HMR（仅开发期实际用到）
+      · script-src 的 unsafe-eval/inline —— Vite 开发期需要；生产构建可进一步收紧
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' http://127.0.0.1:* ws://localhost:* http://localhost:*;"
+    />
+    <title>文枢 DocForge</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
