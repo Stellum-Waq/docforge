@@ -78,13 +78,22 @@ export default function App(): React.JSX.Element {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-abyss">
-      {/* 背景层：网格地平线 + 极光光斑 + 粒子场，三层叠加出"深空科技"观感 */}
+      {/*
+        背景装饰层。
+
+        **纪律：装饰只允许出现在壳层，绝不能垫在内容下面。**
+        第一版把网格、极光斑、粒子铺满整个窗口，而卡片又是半透明的，
+        结果"功能模块和背景糊成一片"。现在：
+          · 网格用径向遮罩把中心压淡 —— 装饰是"围着内容"，不是"垫在内容下"；
+          · 极光斑推到画面之外，只留边缘辉光；
+          · 粒子大幅降透明：它的作用是给壳层一点活气，不是当主角。
+      */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="grid-floor absolute inset-0 opacity-[0.55]" />
-        <div className="absolute -top-40 -left-32 h-[520px] w-[520px] rounded-full bg-aurora-cyan/8 blur-[130px]" />
-        <div className="absolute -right-40 -bottom-52 h-[560px] w-[560px] rounded-full bg-aurora-violet/8 blur-[140px]" />
-        <ParticleField className="absolute inset-0 h-full w-full opacity-70" />
-        <div className="anim-scan absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-aurora-cyan/35 to-transparent" />
+        <div className="grid-floor grid-vignette absolute inset-0 opacity-40" />
+        <div className="absolute -top-56 -left-48 h-[560px] w-[560px] rounded-full bg-aurora-cyan/6 blur-[150px]" />
+        <div className="absolute -right-56 -bottom-64 h-[600px] w-[600px] rounded-full bg-aurora-violet/6 blur-[160px]" />
+        <ParticleField className="absolute inset-0 h-full w-full opacity-30" />
+        <div className="anim-scan absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-aurora-cyan/25 to-transparent" />
       </div>
 
       <TitleBar phase={phase} phaseMessage={message} />
@@ -92,7 +101,11 @@ export default function App(): React.JSX.Element {
       <div className="relative z-10 flex min-h-0 flex-1">
         <Sidebar active={route} onSelect={setRoute} fileCount={files.length} />
 
-        <main className="flex min-w-0 flex-1 flex-col">
+        {/*
+          工作区铺一层不透明底色，让"壳层有装饰、工作区干净"成立。
+          这是三层阶梯的中间层 —— 深于卡片、亮于外壳，卡片放上去自然浮起。
+        */}
+        <main className="relative flex min-w-0 flex-1 flex-col bg-void">
           {/*
             这里刻意**不用** AnimatePresence 做路由切换。
             `mode="wait"` 会让新页面必须等旧页面的退出动画播完才挂载，而退出动画依赖
@@ -102,7 +115,7 @@ export default function App(): React.JSX.Element {
           */}
           <motion.div
             key={route}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className="flex min-h-0 flex-1 flex-col"
@@ -172,13 +185,13 @@ function StatusBar({ onOpenTaskCenter }: { onOpenTaskCenter: () => void }): Reac
   const streaming = useJobs((s) => s.streaming)
 
   return (
-    <footer className="relative z-30 flex h-8 shrink-0 items-center gap-3 border-t border-hairline/50 bg-void/70 px-3.5 backdrop-blur-xl">
+    <footer className="relative z-30 flex h-8 shrink-0 items-center gap-3 border-t border-hairline bg-abyss px-3.5">
       <span className="flex items-center gap-1.5 text-[10.5px] text-ink-4">
         <Activity size={11} className={cn(streaming ? 'text-ok' : 'text-idle')} />
         {streaming ? '事件流已连接' : '事件流断开'}
       </span>
 
-      <span className="h-3 w-px bg-hairline/60" />
+      <span className="h-3 w-px bg-hairline" />
 
       <span className="text-[10.5px] text-ink-4">
         工作区 <span className="font-mono text-ink-2">{files}</span> 个文件
@@ -186,11 +199,11 @@ function StatusBar({ onOpenTaskCenter }: { onOpenTaskCenter: () => void }): Reac
 
       {job && (
         <>
-          <span className="h-3 w-px bg-hairline/60" />
+          <span className="h-3 w-px bg-hairline" />
           <button
             type="button"
             onClick={onOpenTaskCenter}
-            className="group flex min-w-0 items-center gap-2 rounded px-1.5 py-0.5 transition-colors hover:bg-panel-2/70"
+            className="group flex min-w-0 items-center gap-2 rounded px-1.5 py-0.5 transition-colors hover:bg-panel-3"
           >
             <span className="relative flex h-1.5 w-1.5 shrink-0">
               {running && (
@@ -209,7 +222,7 @@ function StatusBar({ onOpenTaskCenter }: { onOpenTaskCenter: () => void }): Reac
             </span>
 
             {/* 行内细进度条 */}
-            <span className="h-[3px] w-24 overflow-hidden rounded-full bg-hairline/60">
+            <span className="h-[3px] w-24 overflow-hidden rounded-full bg-panel-3">
               <motion.span
                 className="block h-full rounded-full bg-linear-to-r from-aurora-cyan to-aurora-violet"
                 animate={{ width: `${job.progress}%` }}
@@ -228,7 +241,7 @@ function StatusBar({ onOpenTaskCenter }: { onOpenTaskCenter: () => void }): Reac
       <button
         type="button"
         onClick={onOpenTaskCenter}
-        className="ml-auto flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[10.5px] text-ink-4 transition-colors hover:bg-panel-2/70 hover:text-ink-2"
+        className="ml-auto flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[10.5px] text-ink-4 transition-colors hover:bg-panel-3 hover:text-ink-2"
       >
         <Layers size={11} />
         任务中心

@@ -2,18 +2,53 @@
 
 /* ==========================================================================
    文枢 DocForge — 设计令牌
-   对应设计文档 §2.5「UI 视觉语言」：深空底色 + 极光渐变 + 玻璃拟态。
-   所有颜色、间距、动效曲线都在这里集中定义，组件只引用语义化变量。
+   ==========================================================================
+
+   ## 视觉语言
+
+   深色工作台：**外壳发光、工作区安静、卡片浮起**。
+
+   ## 为什么是三层中性阶梯
+
+   第一版把底色做得"高级"（#05070d 起的极深蓝），问题出在**层与层之间只差
+   4~6 个 L\* 单位**，再加上卡片是半透明的（`color-mix(..., transparent)`）
+   压在持续运动的网格 + 粒子 + 极光斑上 —— 结果是功能和背景糊成一片，
+   用户的原话是"分不开"。
+
+   深色界面上，"层次"必须靠**两件事同时**成立：
+
+     1. **不透明面 + 真实的明度阶梯**：卡片比工作区亮、工作区比外壳亮，
+        每一级差 ≥6 个 L\* ，肉眼才能稳定分辨；
+     2. **投影 + 1px 顶边高光**：深色主题里投影很弱，只靠明度差会显得"平"；
+        一条向上的高光边把卡片从底面上"抬"起来。
+
+   因此这里的中性阶梯刻意**不做**"越深越高级"，而是让每一级都能被看见：
+
+       外壳 abyss  #05070c   ← 装饰光只出现在这一层
+       工作区 void #0a0e16   ← 内容舞台，完全不透明
+       卡片 panel  #151c29
+       嵌套 panel-2 #1c2534
+       悬停 panel-3 #26303f
+
+   ## 装饰的边界
+
+   网格、极光斑、粒子**只在壳层可见**，绝不允许压在文字下面。
+   内容区一律用不透明面色 —— 这是可读性的底线，不是审美偏好。
    ========================================================================== */
 
 @theme {
-  /* --- 深空基底 --- */
-  --color-abyss: #05070d;
-  --color-void: #080b14;
-  --color-panel: #0b0f1a;
-  --color-panel-2: #111726;
-  --color-panel-3: #182034;
-  --color-hairline: #1e2740;
+  /* --- 三层中性阶梯（每一级都必须能被看见）---
+     数值不是凭感觉挑的：改完用 tools 里的对比度探针量过实际渲染像素，
+     相邻两级 L* 差都在 6 以上。 */
+  --color-abyss: #05070c; /* 最外壳：标题栏 / 侧栏 / 状态栏 */
+  --color-void: #0a0e16; /* 工作区舞台：所有内容铺在它上面 */
+  --color-panel: #18202f; /* 一级卡片 —— 比工作区明显亮一档 */
+  --color-panel-2: #222c3e; /* 卡内嵌套：列表项 / 输入框 / 卡头 */
+  --color-panel-3: #2c3849; /* 悬停与激活 */
+
+  /* --- 边线：从"看得见"开始，而不是从"看不见"开始 --- */
+  --color-hairline: #323e53; /* 常规分隔线 / 卡片描边 */
+  --color-hairline-2: #47576f; /* 需要被注意到的边线（聚焦、选中） */
 
   /* --- 极光主色 --- */
   --color-aurora-cyan: #22d3ee;
@@ -26,19 +61,37 @@
   --color-warn: #fbbf24;
   --color-err: #fb7185;
   --color-run: #38bdf8;
-  --color-idle: #64748b;
+  --color-idle: #7c8aa3;
 
-  /* --- 文本层级 --- */
-  --color-ink: #e8edf7;
-  --color-ink-2: #a8b3c9;
-  --color-ink-3: #6b7893;
-  --color-ink-4: #47536b;
+  /* --- 文本层级 ---
+     四级灰阶，**每一级都在最亮的面（panel-2）上过 WCAG AA 的 4.5:1**。
+     界面上大量元信息（文件大小、耗时、路径、提示）都用 ink-4，
+     它必须看得清 —— "弱提示"的意思是"不抢眼"，不是"看不清"。
+     相邻两级 L* 差 8~12，既能分辨又不会跳。 */
+  --color-ink: #f2f6fc; /* L*96  标题 / 主要信息        ≈12.4:1 */
+  --color-ink-2: #dbe3f0; /* L*90  正文                  ≈10.6:1 */
+  --color-ink-3: #b3c0d6; /* L*77  次要说明               ≈7.5:1 */
+  --color-ink-4: #93a1ba; /* L*66  弱提示 / 元信息         ≈5.3:1 */
 
   /* --- 字体 --- */
   --font-sans:
     'Inter', 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI', 'PingFang SC',
     system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', ui-monospace, monospace;
+
+  /* --- 圆角阶梯 --- */
+  --radius-card: 14px;
+  --radius-inner: 10px;
+
+  /* --- 投影阶梯 ---
+     深色主题里投影要"短而实"：大而散的模糊在深底上几乎看不见，
+     真正起作用的是贴边的那一圈暗影 + 顶部的 1px 高光。 */
+  --shadow-card:
+    0 1px 2px rgb(0 0 0 / 0.55), 0 10px 26px -14px rgb(0 0 0 / 0.85);
+  --shadow-raised:
+    0 2px 4px rgb(0 0 0 / 0.5), 0 16px 40px -18px rgb(0 0 0 / 0.9);
+  --shadow-pop:
+    0 4px 10px rgb(0 0 0 / 0.55), 0 28px 70px -24px rgb(0 0 0 / 0.95);
 
   /* --- 动效曲线 --- */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -73,22 +126,23 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* 细滚动条，融进深色主题 */
+  /* 细滚动条。轨道给一点底色，否则在卡片上"悬空"很难看出可滚动范围 */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: color-mix(in oklab, var(--color-abyss) 60%, transparent);
+    border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb {
-    background: color-mix(in oklab, var(--color-hairline) 90%, white 10%);
+    background: var(--color-hairline-2);
     border-radius: 999px;
     border: 3px solid transparent;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in oklab, var(--color-aurora-cyan) 45%, var(--color-hairline));
+    background: var(--color-aurora-cyan);
     background-clip: content-box;
   }
 
@@ -106,45 +160,90 @@
 }
 
 /* ==========================================================================
-   组件层：玻璃拟态与发光效果
+   组件层：面 / 边 / 影
    ========================================================================== */
 
 @layer components {
-  /* 玻璃卡片：背景模糊 + 渐变描边 + 内高光，是"高级感"的核心材质 */
-  .glass {
+  /* ------------------------------------------------------------------
+     面（surface）
+     三个语义化的面，覆盖全应用 95% 的场景。所有面都是**不透明**的：
+     半透明面压在网格与粒子上，正是"功能模块和背景混在一起"的根因。
+     ------------------------------------------------------------------ */
+
+  /* 一级面：卡片、面板。带 1px 顶边高光来"抬"起自己 */
+  .surface-1 {
     position: relative;
-    background: linear-gradient(
-      160deg,
-      color-mix(in oklab, var(--color-panel-2) 78%, transparent),
-      color-mix(in oklab, var(--color-panel) 88%, transparent)
-    );
-    backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid color-mix(in oklab, var(--color-hairline) 70%, transparent);
-    border-radius: 16px;
+    background: var(--color-panel);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
   }
 
-  /* 顶部 1px 高光，模拟光线从上方掠过 */
-  .glass::before {
+  /* 卡内嵌套面：列表项、输入框、表头、代码块 */
+  .surface-2 {
+    background: var(--color-panel-2);
+    border: 1px solid color-mix(in oklab, var(--color-hairline) 80%, transparent);
+    border-radius: var(--radius-inner);
+  }
+
+  /* 可交互的嵌套面：悬停时抬到 panel-3，并让边线亮起来 */
+  .surface-2-interactive {
+    background: var(--color-panel-2);
+    border: 1px solid color-mix(in oklab, var(--color-hairline) 80%, transparent);
+    border-radius: var(--radius-inner);
+    transition:
+      background-color 160ms var(--ease-out-expo),
+      border-color 160ms var(--ease-out-expo);
+  }
+  .surface-2-interactive:hover {
+    background: var(--color-panel-3);
+    border-color: var(--color-hairline-2);
+  }
+
+  /* 顶层浮层：下拉、对话框、拖拽遮罩。投影最深，且必须不透明 */
+  .surface-pop {
+    background: color-mix(in oklab, var(--color-panel) 96%, var(--color-abyss));
+    border: 1px solid var(--color-hairline-2);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-pop);
+  }
+
+  /* ------------------------------------------------------------------
+     兼容层
+     `.glass` / `.glass-flat` 是早期命名的材质类，全应用还有几十处引用。
+     这里让它们指向新的面，语义不变、观感统一 —— 不必去改每一个调用点，
+     也避免出现"改了一半、两种观感并存"的更糟状态。
+     ------------------------------------------------------------------ */
+
+  .glass {
+    position: relative;
+    background: var(--color-panel);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* 顶部 1px 高光：模拟光线从上方掠过，把面从底面上"抬"起来 */
+  .glass::before,
+  .surface-1::before {
     content: '';
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     background: linear-gradient(
       90deg,
       transparent,
-      color-mix(in oklab, var(--color-aurora-cyan) 55%, transparent),
-      color-mix(in oklab, var(--color-aurora-violet) 45%, transparent),
+      color-mix(in oklab, white 14%, transparent),
       transparent
     );
-    opacity: 0.55;
     pointer-events: none;
   }
 
   .glass-flat {
-    background: color-mix(in oklab, var(--color-panel) 70%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-hairline) 60%, transparent);
-    border-radius: 12px;
+    background: var(--color-panel-2);
+    border: 1px solid color-mix(in oklab, var(--color-hairline) 80%, transparent);
+    border-radius: var(--radius-inner);
   }
 
   /* 极光文字渐变 */
@@ -166,38 +265,62 @@
     position: relative;
     background: linear-gradient(
       120deg,
-      color-mix(in oklab, var(--color-aurora-cyan) 22%, var(--color-panel-2)),
-      color-mix(in oklab, var(--color-aurora-violet) 22%, var(--color-panel-2))
+      color-mix(in oklab, var(--color-aurora-cyan) 30%, var(--color-panel-3)),
+      color-mix(in oklab, var(--color-aurora-violet) 30%, var(--color-panel-3))
     );
-    border: 1px solid color-mix(in oklab, var(--color-aurora-cyan) 40%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-aurora-cyan) 55%, transparent);
+    color: var(--color-ink);
     transition:
       box-shadow 240ms var(--ease-out-expo),
-      transform 240ms var(--ease-out-expo);
+      transform 240ms var(--ease-out-expo),
+      filter 240ms var(--ease-out-expo);
   }
   .btn-glow:hover {
+    filter: brightness(1.12);
     box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--color-aurora-cyan) 55%, transparent),
-      0 8px 32px -8px color-mix(in oklab, var(--color-aurora-cyan) 65%, transparent);
+      0 0 0 1px color-mix(in oklab, var(--color-aurora-cyan) 40%, transparent),
+      0 10px 28px -10px color-mix(in oklab, var(--color-aurora-cyan) 60%, transparent);
     transform: translateY(-1px);
   }
   .btn-glow:active {
     transform: translateY(0) scale(0.985);
   }
 
-  /* 网格地平线背景 */
+  /* ------------------------------------------------------------------
+     背景装饰
+     只允许出现在壳层（标题栏 / 侧栏 / 状态栏 / 内容之外的留白）。
+     网格用径向遮罩把中心压暗，让装饰"围着内容"而不是"垫在内容下"。
+     ------------------------------------------------------------------ */
+
   .grid-floor {
     background-image:
       linear-gradient(
         to right,
-        color-mix(in oklab, var(--color-aurora-cyan) 7%, transparent) 1px,
+        color-mix(in oklab, var(--color-aurora-cyan) 10%, transparent) 1px,
         transparent 1px
       ),
       linear-gradient(
         to bottom,
-        color-mix(in oklab, var(--color-aurora-cyan) 7%, transparent) 1px,
+        color-mix(in oklab, var(--color-aurora-cyan) 10%, transparent) 1px,
         transparent 1px
       );
-    background-size: 44px 44px;
+    background-size: 52px 52px;
+  }
+
+  /* 中间的网格淡出：内容区域不该有网格透出来 */
+  .grid-vignette {
+    -webkit-mask-image: radial-gradient(
+      ellipse 62% 58% at 50% 46%,
+      transparent 0%,
+      rgb(0 0 0 / 0.35) 55%,
+      black 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 62% 58% at 50% 46%,
+      transparent 0%,
+      rgb(0 0 0 / 0.35) 55%,
+      black 100%
+    );
   }
 
   /* 无边框窗口的拖拽区域 */

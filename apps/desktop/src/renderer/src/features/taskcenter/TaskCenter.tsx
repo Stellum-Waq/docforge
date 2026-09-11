@@ -91,14 +91,14 @@ export function TaskCenter(): React.JSX.Element {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.18 }}
         onClick={() => setDrawerOpen(false)}
-        className="absolute inset-0 z-30 bg-abyss/45 backdrop-blur-[2px]"
+        className="absolute inset-0 z-30 bg-abyss/70 backdrop-blur-[2px]"
       />
 
       <motion.aside
         initial={{ x: 420, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-        className="absolute inset-y-0 right-0 z-40 flex w-[440px] flex-col border-l border-hairline/60 bg-panel/92 backdrop-blur-2xl"
+        className="absolute inset-y-0 right-0 z-40 flex w-[440px] flex-col border-l border-hairline-2 bg-panel backdrop-blur-2xl"
       >
         {job ? (
           <JobPanel
@@ -162,7 +162,7 @@ function JobPanel({
   return (
     <>
       {/* 头部 */}
-      <header className="flex items-center gap-3 border-b border-hairline/50 px-4 py-3">
+      <header className="flex items-center gap-3 border-b border-hairline px-4 py-3">
         <ProgressRing value={job.progress} size={44} stroke={3.5}>
           <span className="font-mono text-[10.5px] font-semibold text-ink">
             {Math.round(job.progress)}%
@@ -207,7 +207,7 @@ function JobPanel({
       </header>
 
       {/* 结果目录 */}
-      <div className="flex items-center gap-2 border-b border-hairline/40 px-4 py-2">
+      <div className="flex items-center gap-2 border-b border-hairline px-4 py-2">
         <FolderOpen size={12} className="shrink-0 text-ink-4" />
         <span className="selectable truncate font-mono text-[10.5px] text-ink-4" title={job.outputDir}>
           {job.outputDir}
@@ -224,13 +224,13 @@ function JobPanel({
 
       {/* 失败汇总 */}
       {job.error && (
-        <div className="border-b border-hairline/40 bg-warn/6 px-4 py-2 text-[11px] text-warn">
+        <div className="border-b border-hairline bg-warn/6 px-4 py-2 text-[11px] text-warn">
           {job.error}
         </div>
       )}
 
       {/* 过滤器 */}
-      <div className="flex gap-1 border-b border-hairline/40 px-3 py-2">
+      <div className="flex gap-1 border-b border-hairline px-3 py-2">
         {(
           [
             ['all', `全部 ${allTasks.length}`],
@@ -247,7 +247,7 @@ function JobPanel({
               'rounded-md px-2 py-1 text-[11px] transition-colors',
               filter === key
                 ? 'bg-aurora-cyan/14 text-aurora-cyan'
-                : 'text-ink-3 hover:bg-panel-2/60 hover:text-ink-2'
+                : 'text-ink-3 hover:bg-panel-2 hover:text-ink-2'
             )}
           >
             {label}
@@ -303,7 +303,7 @@ function TaskList({ tasks }: { tasks: JobTask[] }): React.JSX.Element {
               }}
               className="px-1.5 py-[3px]"
             >
-              <div className="rounded-lg border border-transparent px-2 py-1.5 transition-colors hover:border-hairline/60 hover:bg-panel-2/45">
+              <div className="rounded-lg border border-transparent px-2 py-1.5 transition-colors hover:border-hairline-2 hover:bg-panel-2">
                 <div className="flex items-center gap-2">
                   <span className={cn('shrink-0', meta.tone === 'err' ? 'text-err' : meta.tone === 'ok' ? 'text-ok' : 'text-ink-4')}>
                     {meta.icon}
@@ -361,7 +361,7 @@ function LogStrip({ logs }: { logs: { id: string; fileName: string; line: string
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="shrink-0 border-t border-hairline/50">
+    <div className="shrink-0 border-t border-hairline">
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}
@@ -406,7 +406,7 @@ function JobList({
 }): React.JSX.Element {
   return (
     <>
-      <header className="flex items-center gap-2 border-b border-hairline/50 px-4 py-3">
+      <header className="flex items-center gap-2 border-b border-hairline px-4 py-3">
         <span className="text-[13px] font-semibold text-ink">任务中心</span>
         <Badge tone="idle">{jobs.length}</Badge>
         <div className="ml-auto flex gap-1.5">
@@ -436,7 +436,7 @@ function JobList({
                   'mb-1.5 w-full rounded-lg border px-3 py-2 text-left transition-colors',
                   job.id === activeId
                     ? 'border-aurora-cyan/30 bg-aurora-cyan/8'
-                    : 'border-hairline/50 hover:border-hairline hover:bg-panel-2/50'
+                    : 'border-hairline hover:border-hairline hover:bg-panel-2'
                 )}
               >
                 <div className="flex items-center gap-2">

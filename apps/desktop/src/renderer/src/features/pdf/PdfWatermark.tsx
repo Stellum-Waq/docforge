@@ -331,7 +331,7 @@ export function PdfWatermark(): React.JSX.Element {
               max={Math.max(1, meta.pageCount)}
               value={page}
               onChange={(e) => setPage(Number(e.target.value))}
-              className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-hairline/70
+              className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-panel-3
                 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full
                 [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-aurora-cyan
@@ -359,7 +359,7 @@ export function PdfWatermark(): React.JSX.Element {
                   'shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors',
                   file.id === sample?.id
                     ? 'border-aurora-cyan/50 bg-aurora-cyan/12 text-aurora-cyan'
-                    : 'border-hairline/60 text-ink-4 hover:border-hairline hover:text-ink-2'
+                    : 'border-hairline-2 text-ink-4 hover:border-hairline hover:text-ink-2'
                 )}
               >
                 <span className="block max-w-[110px] truncate">{file.name}</span>
@@ -383,7 +383,7 @@ export function PdfWatermark(): React.JSX.Element {
       </div>
 
       {/* ============ 右侧：参数 ============ */}
-      <aside className="w-[336px] shrink-0 overflow-y-auto border-l border-hairline/50 bg-void/40 p-4">
+      <aside className="w-[336px] shrink-0 overflow-y-auto border-l border-hairline bg-abyss p-4">
         <div className="space-y-3.5">
           <Card title="水印内容" icon={<Stamp size={13} strokeWidth={1.9} />}>
             <div className="space-y-3">
@@ -597,7 +597,7 @@ export function PdfWatermark(): React.JSX.Element {
             </div>
           </Card>
 
-          <div className="rounded-lg border border-hairline/60 bg-panel-2/40 px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-4">
+          <div className="rounded-lg border border-hairline-2 bg-panel-2 px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-4">
             <div className="mb-1 font-medium text-ink-3">关于水印文字</div>
             水印是以**矢量文字**写入的，因此任意放大都清晰，而且仍然可以被复制与检索 ——
             如果渲染成图片贴上去，用户就没法选中它了。

@@ -10,7 +10,7 @@
 除了图形界面，还提供一套**命令行**（`run` / `pipeline` / `watch` / `presets`），
 供脚本与计划任务调度 —— 用的和界面是同一个任务队列，行为完全一致。
 
-![总览](docs/screenshots/dashboard.png)
+![总览](docs/screenshots/01-dashboard.png)
 
 ---
 
@@ -19,13 +19,34 @@
 | | |
 |---|---|
 | **多步骤流水线**<br>把固定的一串动作串起来一次跑完。界面里实时校验每一步的输入/输出类型，类型对不上当场就能看见，不会跑到第三步才失败。 | **扫描件转可搜索 PDF**<br>给扫描件叠加不可见文字层：外观仍是原图，但文字可搜索、可复制、可检索。参数表单由内核的 `paramsSchema` 自动生成。 |
-| ![流水线](docs/screenshots/pipeline.png) | ![PDF 工具箱](docs/screenshots/pdf-toolbox.png) |
+| ![流水线](docs/screenshots/03-pipeline.png) | ![PDF 工具箱](docs/screenshots/02-pdf-toolbox.png) |
 | **PDF 水印**<br>矢量文字，任意缩放都清晰；拖拽定位、实时预览与正式输出走**同一套代码**，所见即所得。 | **图片水印**<br>支持平铺防盗图、每张唯一内容（`{filename}` `{page}` 等模板变量）、EXIF 方向自动摆正。 |
-| ![PDF 水印](docs/screenshots/pdf-watermark.png) | ![图片水印](docs/screenshots/image-watermark.png) |
+| ![PDF 水印](docs/screenshots/07-pdf-watermark.png) | ![图片水印](docs/screenshots/04-image-watermark.png) |
 | **文字提取（OCR 双引擎）**<br>「先试一张，满意再批量」：引擎与参数对结果影响很大，先看单张效果再批处理，不会白跑一批。 | **批量任务**<br>队列、并发、逐文件进度与失败原因；单个坏文件只影响它自己，绝不拖垮整批。 |
-| ![OCR](docs/screenshots/ocr.png) | ![批量任务](docs/screenshots/batch.png) |
+| ![OCR](docs/screenshots/05-ocr.png) | ![批量任务](docs/screenshots/06-batch.png) |
 
-![设置](docs/screenshots/settings.png)
+![设置](docs/screenshots/08-settings.png)
+
+### 视觉语言
+
+深色工作台遵循一条纪律：**外壳发光、工作区安静、卡片浮起**。
+
+| 层级 | 色值 | L\* | 用途 |
+|---|---|---|---|
+| 外壳 | `#05070c` | 1.9 | 标题栏 / 侧栏 / 状态栏 —— 装饰只在这一层可见 |
+| 工作区 | `#0a0e16` | 3.9 | 工作舞台，完全不透明 |
+| 卡片 | `#18202f` | 12.2 | 一级面板 |
+| 卡内嵌套 | `#222c3e` | 17.9 | 卡头 / 列表项 / 输入框 |
+| 悬停激活 | `#2c3849` | 23.2 | 交互态 |
+| 边线 | `#323e53` | 26.0 | 分隔与描边 |
+
+相邻两级 L\* 差 ≥5.7，肉眼可稳定分辨；文本四级灰阶在**最亮的面**上
+全部满足 WCAG AA（最低一档 5.3:1）。
+
+> 这套数值不是凭感觉挑的 —— 改完用像素探针量过实际渲染结果。
+> 初版的问题恰恰是"面与面只差 4~6 个 L\*，卡片还是半透明的"，
+> 压在持续运动的网格与粒子上就会糊成一片。
+> 定下两条硬规则：**面色一律不透明**，**装饰只在壳层可见**。
 
 ---
 

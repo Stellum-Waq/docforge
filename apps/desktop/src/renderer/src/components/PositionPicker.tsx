@@ -47,7 +47,7 @@ export function PositionPicker({
                 'flex h-8 items-center justify-center rounded-md border text-[10px] transition-colors',
                 active
                   ? 'border-aurora-cyan/55 bg-aurora-cyan/14 text-aurora-cyan'
-                  : 'border-hairline/60 text-ink-4 hover:border-hairline hover:bg-panel-2/50 hover:text-ink-3'
+                  : 'border-hairline-2 text-ink-4 hover:border-hairline hover:bg-panel-2 hover:text-ink-3'
               )}
             >
               {cell.label}
@@ -64,7 +64,7 @@ export function PositionPicker({
             'flex h-7 items-center justify-center gap-1.5 rounded-md border text-[10.5px] transition-colors',
             value === 'tile'
               ? 'border-aurora-violet/55 bg-aurora-violet/14 text-aurora-violet'
-              : 'border-hairline/60 text-ink-4 hover:border-hairline hover:text-ink-3'
+              : 'border-hairline-2 text-ink-4 hover:border-hairline hover:text-ink-3'
           )}
         >
           <Droplet size={11} />
@@ -77,7 +77,7 @@ export function PositionPicker({
             'flex h-7 items-center justify-center gap-1.5 rounded-md border text-[10.5px] transition-colors',
             value === 'custom'
               ? 'border-aurora-violet/55 bg-aurora-violet/14 text-aurora-violet'
-              : 'border-hairline/60 text-ink-4 hover:border-hairline hover:text-ink-3'
+              : 'border-hairline-2 text-ink-4 hover:border-hairline hover:text-ink-3'
           )}
         >
           <Wand2 size={11} />

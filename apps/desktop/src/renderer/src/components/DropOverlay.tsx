@@ -139,7 +139,7 @@ export function DropOverlay(): React.JSX.Element {
             </div>
 
             {stat.count > 0 && (
-              <div className="flex items-center gap-4 rounded-full border border-hairline/60 bg-panel/70 px-4 py-1.5 text-[12px]">
+              <div className="flex items-center gap-4 rounded-full border border-hairline-2 bg-panel px-4 py-1.5 text-[12px]">
                 <span className="flex items-center gap-1.5 text-ink">
                   <FileStack size={13} className="text-aurora-cyan" strokeWidth={1.75} />
                   <span className="font-mono font-semibold">{stat.count}</span> 个文件

@@ -194,7 +194,7 @@ export function SelfCheckPanel({
                 className={cn(
                   'flex items-start gap-2.5 rounded-lg border px-3 py-2',
                   item.status === 'ok'
-                    ? 'border-hairline/50 bg-panel-2/30'
+                    ? 'border-hairline bg-panel-2'
                     : item.status === 'warn'
                       ? 'border-warn/25 bg-warn/6'
                       : 'border-err/30 bg-err/8'
@@ -232,7 +232,7 @@ export function SelfCheckPanel({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] text-ink-4 transition-colors hover:bg-panel-2/50 hover:text-ink-2"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] text-ink-4 transition-colors hover:bg-panel-2 hover:text-ink-2"
         >
           <ChevronDown size={12} className={cn('transition-transform', expanded && 'rotate-180')} />
           {expanded ? '只看需要关注的项' : `查看全部 ${report.items.length} 项检查`}
@@ -294,7 +294,7 @@ export function FirstRunWizard(): React.JSX.Element {
         transition={{ type: 'spring', stiffness: 320, damping: 30 }}
         className="glass flex max-h-[82vh] w-[600px] flex-col overflow-hidden"
       >
-        <div className="border-b border-hairline/50 px-5 py-4">
+        <div className="border-b border-hairline px-5 py-4">
           <div className="flex items-center gap-2.5">
             <Sparkles size={17} className="text-aurora-cyan" />
             <h2 className="text-[16px] font-semibold text-ink">欢迎使用文枢 DocForge</h2>
@@ -308,7 +308,7 @@ export function FirstRunWizard(): React.JSX.Element {
           <SelfCheckPanel variant="full" />
         </div>
 
-        <div className="flex items-center gap-2 border-t border-hairline/50 px-5 py-3">
+        <div className="flex items-center gap-2 border-t border-hairline px-5 py-3">
           <span className="text-[10.5px] text-ink-4">随时可在「总览」或「设置」里重新检查</span>
           <Button variant="primary" className="ml-auto" onClick={dismiss}>
             开始使用

@@ -99,7 +99,7 @@ export function PresetBar({
   const activePreset = presets.find((p) => p.id === activeId) ?? null
 
   return (
-    <div className="rounded-xl border border-hairline/60 bg-panel-2/40 p-2.5">
+    <div className="rounded-xl border border-hairline-2 bg-panel-2 p-2.5">
       <div className="mb-2 flex items-center gap-1.5">
         <Bookmark size={12} className="text-aurora-violet" strokeWidth={1.9} />
         <span className="text-[11.5px] font-medium text-ink-2">参数预设</span>
@@ -114,7 +114,7 @@ export function PresetBar({
             setNaming((v) => !v)
             setError(null)
           }}
-          className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] text-ink-4 transition-colors hover:bg-panel-2/70 hover:text-ink-2"
+          className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] text-ink-4 transition-colors hover:bg-panel-2 hover:text-ink-2"
         >
           <Save size={10} />
           存为预设
@@ -137,7 +137,7 @@ export function PresetBar({
                   'group flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10.5px] transition-colors',
                   active
                     ? 'border-aurora-cyan/45 bg-aurora-cyan/10 text-aurora-cyan'
-                    : 'border-hairline/60 text-ink-3 hover:border-hairline hover:text-ink-2'
+                    : 'border-hairline-2 text-ink-3 hover:border-hairline hover:text-ink-2'
                 )}
               >
                 <button

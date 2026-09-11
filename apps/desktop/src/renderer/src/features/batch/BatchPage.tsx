@@ -112,7 +112,7 @@ export function BatchPage(): React.JSX.Element {
         {/* ---------------- 进行中 ---------------- */}
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[12.5px] font-semibold text-ink">正在运行</span>
-          <span className="h-px flex-1 bg-hairline/50" />
+          <span className="h-px flex-1 bg-panel-3" />
           <span className="font-mono text-[10.5px] text-ink-4">{live.length}</span>
         </div>
 
@@ -210,7 +210,7 @@ export function BatchPage(): React.JSX.Element {
         {/* ---------------- 历史 ---------------- */}
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[12.5px] font-semibold text-ink">历史记录</span>
-          <span className="h-px flex-1 bg-hairline/50" />
+          <span className="h-px flex-1 bg-panel-3" />
           {history.length > 0 && (
             <Button
               size="sm"
@@ -235,7 +235,7 @@ export function BatchPage(): React.JSX.Element {
           <div className="glass overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-hairline/50 text-[10.5px] tracking-wide text-ink-4">
+                <tr className="border-b border-hairline text-[10.5px] tracking-wide text-ink-4">
                   <th className="px-4 py-2 font-medium">任务</th>
                   <th className="px-3 py-2 font-medium">状态</th>
                   <th className="px-3 py-2 text-right font-medium">文件</th>
@@ -248,7 +248,7 @@ export function BatchPage(): React.JSX.Element {
                   <tr
                     key={job.id}
                     className={cn(
-                      'border-b border-hairline/25 text-[11.5px] transition-colors last:border-0 hover:bg-panel-2/40',
+                      'border-b border-hairline text-[11.5px] transition-colors last:border-0 hover:bg-panel-2',
                       liveIds.has(job.id) && 'bg-aurora-cyan/4'
                     )}
                   >

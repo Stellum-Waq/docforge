@@ -126,7 +126,7 @@ export function ToolWorkbench({
   return (
     <div className="flex min-h-0 flex-1">
       {/* ============ 左侧：工具列表 ============ */}
-      <div className="flex w-[248px] shrink-0 flex-col border-r border-hairline/50 bg-void/40">
+      <div className="flex w-[248px] shrink-0 flex-col border-r border-hairline bg-abyss">
         <div className="flex items-center gap-2 px-3.5 py-3">
           <span className="text-aurora-cyan">{icon}</span>
           <span className="text-[13px] font-semibold text-ink">{title}</span>
@@ -147,7 +147,7 @@ export function ToolWorkbench({
                   'group flex w-full items-start gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors',
                   active
                     ? 'border-aurora-cyan/35 bg-aurora-cyan/10'
-                    : 'border-transparent hover:border-hairline/60 hover:bg-panel-2/50',
+                    : 'border-transparent hover:border-hairline-2 hover:bg-panel-2',
                   !available && 'opacity-40'
                 )}
               >
@@ -165,7 +165,7 @@ export function ToolWorkbench({
           })}
         </div>
 
-        <div className="border-t border-hairline/50 px-3.5 py-2.5 text-[10px] leading-relaxed text-ink-4">
+        <div className="border-t border-hairline px-3.5 py-2.5 text-[10px] leading-relaxed text-ink-4">
           工作区共 <span className="font-mono text-ink-2">{candidates.length}</span> 个{fileNoun}
         </div>
       </div>
@@ -315,7 +315,7 @@ export function ToolWorkbench({
                   {isAggregate ? `合并 ${candidates.length} 个文件` : `处理 ${candidates.length} 个文件`}
                 </Button>
 
-                <div className="rounded-lg border border-hairline/60 bg-panel-2/40 px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-4">
+                <div className="rounded-lg border border-hairline-2 bg-panel-2 px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-4">
                   结果会保存到输出目录，**原文件不会被修改**；同名文件自动重命名而不覆盖。
                 </div>
               </div>

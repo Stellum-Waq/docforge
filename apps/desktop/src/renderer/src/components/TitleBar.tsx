@@ -33,7 +33,9 @@ export function TitleBar({ phase, phaseMessage }: TitleBarProps): React.JSX.Elem
   const style = PHASE_STYLE[phase]
 
   return (
-    <header className="drag-region relative z-30 flex h-11 shrink-0 items-center justify-between border-b border-hairline/50 bg-void/70 pl-4 backdrop-blur-xl">
+    // 标题栏用最底的外壳色（abyss），并在底部压一条极光分隔线 ——
+    // 它和工作区之间有一道明确的"边界"，而不是靠颜色深浅去猜
+    <header className="drag-region relative z-30 flex h-11 shrink-0 items-center justify-between border-b border-hairline bg-abyss pl-4">
       {/* 左：品牌标识 + 状态 */}
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex items-center gap-2">
@@ -44,13 +46,17 @@ export function TitleBar({ phase, phaseMessage }: TitleBarProps): React.JSX.Elem
             aria-hidden="true"
           />
           <span className="text-[13px] font-semibold tracking-wide text-ink">文枢</span>
-          <span className="text-[11px] font-medium tracking-[0.18em] text-ink-3">DOCFORGE</span>
+          <span className="text-[11px] font-medium tracking-[0.18em] text-ink-4">DOCFORGE</span>
         </div>
 
-        <div className="h-4 w-px bg-hairline/70" />
+        <div className="h-4 w-px bg-panel-3" />
 
-        {/* 内核状态灯：呼吸圆点 + 文案 */}
-        <div className="flex min-w-0 items-center gap-2" title={phaseMessage}>
+        {/* 内核状态灯：呼吸圆点 + 文案。做成带底色的小胶囊，
+            否则状态文字会"飘"在标题栏上，和品牌名混成一串 */}
+        <div
+          className="flex min-w-0 items-center gap-2 rounded-full border border-hairline bg-panel px-2.5 py-1"
+          title={phaseMessage}
+        >
           <span className="relative flex h-2 w-2 shrink-0">
             {phase === 'ready' && (
               <span
@@ -63,7 +69,7 @@ export function TitleBar({ phase, phaseMessage }: TitleBarProps): React.JSX.Elem
               style={{ background: style.color, boxShadow: `0 0 8px ${style.color}` }}
             />
           </span>
-          <span className="truncate text-[12px] text-ink-2">{style.label}</span>
+          <span className="truncate text-[11.5px] text-ink-2">{style.label}</span>
           {phaseMessage && phase !== 'ready' && (
             <span className="truncate text-[11px] text-ink-4">· {phaseMessage}</span>
           )}

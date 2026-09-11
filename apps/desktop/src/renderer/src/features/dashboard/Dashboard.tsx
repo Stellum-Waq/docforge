@@ -218,7 +218,7 @@ function CoreStatusCard({
 
 function Metric({ label, value, mono }: { label: string; value: string; mono?: boolean }): React.JSX.Element {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-hairline/35 pb-1">
+    <div className="flex items-baseline justify-between gap-3 border-b border-hairline pb-1">
       <dt className="shrink-0 text-ink-4">{label}</dt>
       <dd className={cn('truncate font-medium text-ink-2', mono && 'font-mono text-[11px]')}>{value}</dd>
     </div>
@@ -241,7 +241,7 @@ function ResourceCard({ caps }: { caps?: SystemCapabilities }): React.JSX.Elemen
       </div>
 
       {caps ? (
-        <div className="space-y-3.5">
+        <div className="space-y-2.5">
           <ResourceRow
             icon={<Cpu size={13} strokeWidth={1.75} />}
             label="CPU"
@@ -265,7 +265,7 @@ function ResourceCard({ caps }: { caps?: SystemCapabilities }): React.JSX.Elemen
       ) : (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="anim-shimmer relative h-9 overflow-hidden rounded-lg bg-panel-3/60" />
+            <div key={i} className="anim-shimmer relative h-9 overflow-hidden rounded-lg bg-panel-3" />
           ))}
         </div>
       )}
@@ -296,14 +296,16 @@ function ResourceRow({
           : 'text-ink'
 
   return (
-    <div className="flex items-start gap-3">
+    // 每项资源放进自己的嵌套面：三项之间靠"面"分开，而不是靠几像素的行距。
+    // 之前三项是一摞纯文字，CPU 的型号串又长，挤在一起确实分不清哪一行属于谁。
+    <div className="surface-2 flex items-start gap-3 p-2.5">
       <span className="mt-0.5 text-ink-3">{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[11.5px] text-ink-3">{label}</span>
           <span className={cn('font-mono text-[12px] font-semibold', toneColor)}>{value}</span>
         </div>
-        {sub && <div className="truncate text-[10.5px] text-ink-4">{sub}</div>}
+        {sub && <div className="mt-0.5 truncate text-[10.5px] text-ink-4">{sub}</div>}
       </div>
     </div>
   )
@@ -327,7 +329,7 @@ function EngineMatrix({ engines }: { engines: EngineProbe[] }): React.JSX.Elemen
             <span className="text-[11px] font-semibold tracking-wide text-ink-3">
               {DOMAIN_LABEL[group.domain]}
             </span>
-            <span className="h-px flex-1 bg-hairline/50" />
+            <span className="h-px flex-1 bg-panel-3" />
             <span className="font-mono text-[10px] text-ink-4">
               {group.items.filter((i) => i.available).length}/{group.items.length} 可用
             </span>
@@ -380,7 +382,7 @@ function EngineMatrix({ engines }: { engines: EngineProbe[] }): React.JSX.Elemen
                 </div>
 
                 {/* 保真度迷你条 */}
-                <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-hairline/50">
+                <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-panel-3">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: engine.available ? `${engine.fidelity}%` : '0%' }}
@@ -406,7 +408,7 @@ function SkeletonGrid(): React.JSX.Element {
   return (
     <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="anim-shimmer relative h-[86px] overflow-hidden rounded-xl bg-panel-2/60" />
+        <div key={i} className="anim-shimmer relative h-[86px] overflow-hidden rounded-xl bg-panel-2" />
       ))}
     </div>
   )
@@ -466,7 +468,7 @@ function OcrEngineTile({
     <div
       className={cn(
         'rounded-xl border p-3.5 transition-colors',
-        ready ? 'border-ok/30 bg-ok/5' : 'border-hairline/60 bg-panel-2/40'
+        ready ? 'border-ok/30 bg-ok/5' : 'border-hairline-2 bg-panel-2'
       )}
     >
       <div className="flex items-center justify-between gap-3">
@@ -494,7 +496,7 @@ function OcrEngineTile({
 function LogPanel({ logs }: { logs: string[] }): React.JSX.Element {
   return (
     <div className="glass flex min-h-[230px] flex-col overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-hairline/50 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-b border-hairline px-4 py-2.5">
         <Terminal size={13} strokeWidth={1.9} className="text-ok" />
         <span className="text-[12.5px] font-semibold text-ink">内核日志</span>
         <span className="ml-auto font-mono text-[10px] text-ink-4">{logs.length} 行</span>
@@ -518,7 +520,7 @@ function LogPanel({ logs }: { logs: string[] }): React.JSX.Element {
 function FilePanel({ count }: { count: number }): React.JSX.Element {
   return (
     <div className="glass flex min-h-[230px] flex-col overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-hairline/50 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-b border-hairline px-4 py-2.5">
         <FileText size={13} strokeWidth={1.9} className="text-aurora-violet" />
         <span className="text-[12.5px] font-semibold text-ink">工作区文件</span>
         <span className="ml-auto font-mono text-[10px] text-ink-4">{count} 个</span>
@@ -526,7 +528,7 @@ function FilePanel({ count }: { count: number }): React.JSX.Element {
       <div className="flex flex-1 items-center justify-center p-6">
         {count === 0 ? (
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-dashed border-hairline bg-panel-2/50">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-dashed border-hairline bg-panel-2">
               <FileText size={18} className="text-ink-4" strokeWidth={1.5} />
             </div>
             <div className="text-[12px] text-ink-3">还没有文件</div>

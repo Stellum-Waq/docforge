@@ -33,7 +33,7 @@ export function ComingSoon({ label, hint, milestone, onBack }: ComingSoonProps):
         <h2 className="text-[17px] font-semibold text-ink">{label}</h2>
         {hint && <p className="mt-1 text-[12px] text-ink-3">{hint}</p>}
 
-        <div className="mt-4 rounded-lg border border-hairline/60 bg-panel-2/40 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-ink-3">
+        <div className="mt-4 rounded-lg border border-hairline-2 bg-panel-2 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-ink-3">
           该模块计划在{' '}
           <span className="rounded border border-aurora-cyan/40 bg-aurora-cyan/12 px-1.5 py-px font-mono text-[10.5px] font-semibold text-aurora-cyan">
             {milestone ?? '后续'}

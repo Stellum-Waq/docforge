@@ -127,7 +127,7 @@ export function SettingsPage(): React.JSX.Element {
                   key={engine.id}
                   className={cn(
                     'flex items-start gap-3 rounded-xl border p-3',
-                    engine.available ? 'border-ok/25 bg-ok/5' : 'border-hairline/60 bg-panel-2/40'
+                    engine.available ? 'border-ok/25 bg-ok/5' : 'border-hairline-2 bg-panel-2'
                   )}
                 >
                   <span className={cn('mt-0.5', engine.available ? 'text-ok' : 'text-ink-4')}>
@@ -162,7 +162,7 @@ export function SettingsPage(): React.JSX.Element {
                 hint="关闭时所有识别都在本地完成，图片不会上传"
               />
 
-              <div className="space-y-1.5 border-t border-hairline/40 pt-3">
+              <div className="space-y-1.5 border-t border-hairline pt-3">
                 <div className="flex items-baseline gap-2">
                   <span className="text-[11.5px] font-medium text-ink-2">API Key</span>
                   {settings.hasApiKey && (
@@ -207,7 +207,7 @@ export function SettingsPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 rounded-lg border border-hairline/60 bg-panel-2/40 px-3 py-2.5">
+              <div className="flex items-start gap-2 rounded-lg border border-hairline-2 bg-panel-2 px-3 py-2.5">
                 {settings.encryptionAvailable ? (
                   <ShieldCheck size={14} className="mt-0.5 shrink-0 text-ok" />
                 ) : (
@@ -246,7 +246,7 @@ export function SettingsPage(): React.JSX.Element {
                 rows={4}
                 spellCheck={false}
                 placeholder={'*身份证*\n*合同*\n*工资*'}
-                className="w-full resize-y rounded-lg border border-hairline bg-panel-2/70 px-2.5 py-2 font-mono
+                className="w-full resize-y rounded-lg border border-hairline bg-panel-2 px-2.5 py-2 font-mono
                   text-[11.5px] leading-relaxed text-ink transition-colors outline-none
                   placeholder:text-ink-4 hover:border-aurora-cyan/40 focus:border-aurora-cyan/60"
               />
@@ -292,7 +292,7 @@ export function SettingsPage(): React.JSX.Element {
                 <Stat label="缓存命中" value={String(settings.cache.hits)} icon={<Zap size={11} />} />
               </div>
 
-              <div className="flex flex-wrap gap-2 border-t border-hairline/40 pt-3">
+              <div className="flex flex-wrap gap-2 border-t border-hairline pt-3">
                 <Button size="sm" onClick={() => void load()}>
                   <RefreshCw size={12} />
                   刷新
@@ -343,7 +343,7 @@ function Stat({
   icon?: React.ReactNode
 }): React.JSX.Element {
   return (
-    <div className="rounded-lg border border-hairline/60 bg-panel-2/40 px-3 py-2">
+    <div className="rounded-lg border border-hairline-2 bg-panel-2 px-3 py-2">
       <div className="flex items-center gap-1 text-[10px] text-ink-4">
         {icon}
         {label}

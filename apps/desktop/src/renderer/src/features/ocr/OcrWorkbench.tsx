@@ -250,7 +250,7 @@ export function OcrWorkbench({ actionId }: OcrWorkbenchProps): React.JSX.Element
 
           {/* 识别结果 */}
           <div className="glass flex min-h-0 flex-col overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-hairline/45 px-3.5 py-2">
+            <div className="flex items-center gap-2 border-b border-hairline px-3.5 py-2">
               <FlaskConical size={13} className="text-aurora-violet" strokeWidth={1.9} />
               <span className="text-[12px] font-semibold text-ink">试识别结果</span>
               {testResult && (
@@ -309,7 +309,7 @@ export function OcrWorkbench({ actionId }: OcrWorkbenchProps): React.JSX.Element
                     <div className="mt-2 text-[10.5px] text-ink-4">结果过长，预览已截断</div>
                   )}
 
-                  <div className="mt-3 flex flex-wrap gap-3 border-t border-hairline/40 pt-2.5 text-[10.5px] text-ink-4">
+                  <div className="mt-3 flex flex-wrap gap-3 border-t border-hairline pt-2.5 text-[10.5px] text-ink-4">
                     <span>
                       图片 {testResult.width}×{testResult.height}
                     </span>
@@ -350,7 +350,7 @@ export function OcrWorkbench({ actionId }: OcrWorkbenchProps): React.JSX.Element
                   'shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors',
                   file.id === sample?.id
                     ? 'border-aurora-cyan/50 bg-aurora-cyan/12 text-aurora-cyan'
-                    : 'border-hairline/60 text-ink-4 hover:border-hairline hover:text-ink-2'
+                    : 'border-hairline-2 text-ink-4 hover:border-hairline hover:text-ink-2'
                 )}
               >
                 <span className="block max-w-[110px] truncate">{file.name}</span>
@@ -371,7 +371,7 @@ export function OcrWorkbench({ actionId }: OcrWorkbenchProps): React.JSX.Element
       </div>
 
       {/* ============ 右侧：参数 ============ */}
-      <aside className="w-[336px] shrink-0 overflow-y-auto border-l border-hairline/50 bg-void/40 p-4">
+      <aside className="w-[336px] shrink-0 overflow-y-auto border-l border-hairline bg-abyss p-4">
         <div className="space-y-3.5">
           {/* 引擎状态 */}
           <Card title="识别引擎" icon={<Cpu size={13} strokeWidth={1.9} />}>
@@ -393,7 +393,7 @@ export function OcrWorkbench({ actionId }: OcrWorkbenchProps): React.JSX.Element
                 tone="aurora"
               />
               {engineQuery.data && !engineQuery.data.cloudEnabled && (
-                <div className="rounded-lg border border-hairline/60 bg-panel-2/40 px-2.5 py-2 text-[10.5px] leading-relaxed text-ink-4">
+                <div className="rounded-lg border border-hairline-2 bg-panel-2 px-2.5 py-2 text-[10.5px] leading-relaxed text-ink-4">
                   云端识别默认关闭。到「设置」开启并填入 API Key 后，即可对复杂表格与手写内容使用
                   DeepSeek Vision。
                 </div>
@@ -517,7 +517,7 @@ function EngineTile({
           ? tone === 'ok'
             ? 'border-ok/30 bg-ok/5'
             : 'border-aurora-cyan/30 bg-aurora-cyan/5'
-          : 'border-hairline/60 bg-panel-2/40'
+          : 'border-hairline-2 bg-panel-2'
       )}
     >
       <div className="flex items-center gap-2">

@@ -256,7 +256,7 @@ export function PipelineBuilder(): React.JSX.Element {
                   </div>
 
                   {info && Object.keys(info.paramsSchema?.properties ?? {}).length > 0 ? (
-                    <div className="mt-2.5 border-t border-hairline/40 pt-2.5">
+                    <div className="mt-2.5 border-t border-hairline pt-2.5">
                       <SchemaForm
                         schema={info.paramsSchema}
                         value={step.params}
@@ -275,7 +275,7 @@ export function PipelineBuilder(): React.JSX.Element {
             <button
               type="button"
               onClick={() => setPicking(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-hairline/70 py-2.5 text-[11.5px] text-ink-4 transition-colors hover:border-aurora-cyan/45 hover:text-aurora-cyan"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-hairline-2 py-2.5 text-[11.5px] text-ink-4 transition-colors hover:border-aurora-cyan/45 hover:text-aurora-cyan"
             >
               <Plus size={12} />
               追加一步
@@ -285,7 +285,7 @@ export function PipelineBuilder(): React.JSX.Element {
       </div>
 
       {/* ============ 右侧：候选文件与执行 ============ */}
-      <aside className="w-[330px] shrink-0 overflow-y-auto border-l border-hairline/50 bg-void/40 p-4">
+      <aside className="w-[330px] shrink-0 overflow-y-auto border-l border-hairline bg-abyss p-4">
         <div className="space-y-3.5">
           {/* 类型链校验结果 */}
           {chainIssue ? (
@@ -343,7 +343,7 @@ export function PipelineBuilder(): React.JSX.Element {
                 {steps.map((step, index) => (
                   <span key={step.uid} className="flex items-center gap-1">
                     {index > 0 && <ArrowRight size={10} className="text-ink-4" />}
-                    <span className="rounded-md bg-panel-2/70 px-1.5 py-0.5 text-[10px] text-ink-2">
+                    <span className="rounded-md bg-panel-2 px-1.5 py-0.5 text-[10px] text-ink-2">
                       {byId.get(step.action)?.label ?? step.action}
                     </span>
                   </span>
@@ -414,7 +414,7 @@ export function PipelineBuilder(): React.JSX.Element {
             对 {files.length} 个文件执行 {steps.length} 步
           </Button>
 
-          <div className="rounded-lg border border-hairline/60 bg-panel-2/40 px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-4">
+          <div className="rounded-lg border border-hairline-2 bg-panel-2 px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-4">
             中间产物写在临时目录并在结束后自动清理，**输出目录里只会出现最终结果**；
             原文件不会被修改。
           </div>
@@ -431,7 +431,7 @@ export function PipelineBuilder(): React.JSX.Element {
             className="glass max-h-[70%] w-[520px] overflow-hidden"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center gap-2 border-b border-hairline/50 px-4 py-2.5">
+            <div className="flex items-center gap-2 border-b border-hairline px-4 py-2.5">
               <Plus size={13} className="text-aurora-cyan" />
               <span className="text-[12.5px] font-semibold text-ink">选择一步动作</span>
               <button
@@ -449,7 +449,7 @@ export function PipelineBuilder(): React.JSX.Element {
                   key={info.id}
                   type="button"
                   onClick={() => addStep(info.id)}
-                  className="flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-panel-2/70"
+                  className="flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-panel-2"
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-[12px] font-medium text-ink">{info.label}</span>
@@ -498,7 +498,7 @@ function IconButton({
           ? 'opacity-30'
           : danger
             ? 'hover:border-err/35 hover:bg-err/10 hover:text-err'
-            : 'hover:border-hairline hover:bg-panel-2/70 hover:text-ink-2'
+            : 'hover:border-hairline hover:bg-panel-2 hover:text-ink-2'
       )}
     >
       {children}

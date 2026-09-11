@@ -341,7 +341,7 @@ export function ImageWatermark(): React.JSX.Element {
                   'shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors',
                   file.id === sample?.id
                     ? 'border-aurora-cyan/50 bg-aurora-cyan/12 text-aurora-cyan'
-                    : 'border-hairline/60 text-ink-4 hover:border-hairline hover:text-ink-2'
+                    : 'border-hairline-2 text-ink-4 hover:border-hairline hover:text-ink-2'
                 )}
               >
                 <span className="block max-w-[110px] truncate">{file.name}</span>
@@ -368,7 +368,7 @@ export function ImageWatermark(): React.JSX.Element {
       </div>
 
       {/* ============ 右侧：参数 ============ */}
-      <aside className="w-[336px] shrink-0 overflow-y-auto border-l border-hairline/50 bg-void/40 p-4">
+      <aside className="w-[336px] shrink-0 overflow-y-auto border-l border-hairline bg-abyss p-4">
         <div className="space-y-3.5">
           <Card title="水印内容" icon={<Droplet size={13} strokeWidth={1.9} />}>
             <div className="space-y-3">
@@ -510,7 +510,7 @@ export function ImageWatermark(): React.JSX.Element {
                 <ColorInput value={params.color} onChange={(v) => set('color', v)} />
               </Field>
 
-              <div className="space-y-0.5 border-t border-hairline/40 pt-2">
+              <div className="space-y-0.5 border-t border-hairline pt-2">
                 <Switch
                   checked={params.stroke}
                   onChange={(v) => set('stroke', v)}
@@ -610,7 +610,7 @@ export function ImageWatermark(): React.JSX.Element {
                 </Field>
               </div>
 
-              <div className="space-y-0.5 border-t border-hairline/40 pt-2">
+              <div className="space-y-0.5 border-t border-hairline pt-2">
                 <Switch
                   checked={params.auto_orient}
                   onChange={(v) => set('auto_orient', v)}
