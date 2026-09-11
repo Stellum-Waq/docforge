@@ -42,3 +42,10 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# 把 core/ 加进导入路径（相对 rootdir 解析，即本文件所在目录）。
+#
+# 少了这一行，`pytest core/tests`（从仓库根执行，也就是 `pnpm core:test`
+# 干的事）会因为 CWD 是仓库根而找不到 docforge 包，13 个测试文件全部
+# collection error。之所以在 core/ 下手敲 pytest 一直是好的，是因为
+# `python -m pytest` 会把 CWD 塞进 sys.path —— 本机测试时恰好掩盖了这个问题。
+pythonpath = ["."]
