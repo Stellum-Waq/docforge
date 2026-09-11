@@ -1,6 +1,6 @@
 {
   "name": "@docforge/desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "文枢 DocForge 桌面应用（Electron 壳）",
   "main": "./out/main/index.js",
