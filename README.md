@@ -10,6 +10,23 @@
 除了图形界面，还提供一套**命令行**（`run` / `pipeline` / `watch` / `presets`），
 供脚本与计划任务调度 —— 用的和界面是同一个任务队列，行为完全一致。
 
+![总览](docs/screenshots/dashboard.png)
+
+---
+
+## 界面一览
+
+| | |
+|---|---|
+| **多步骤流水线**<br>把固定的一串动作串起来一次跑完。界面里实时校验每一步的输入/输出类型，类型对不上当场就能看见，不会跑到第三步才失败。 | **扫描件转可搜索 PDF**<br>给扫描件叠加不可见文字层：外观仍是原图，但文字可搜索、可复制、可检索。参数表单由内核的 `paramsSchema` 自动生成。 |
+| ![流水线](docs/screenshots/pipeline.png) | ![PDF 工具箱](docs/screenshots/pdf-toolbox.png) |
+| **PDF 水印**<br>矢量文字，任意缩放都清晰；拖拽定位、实时预览与正式输出走**同一套代码**，所见即所得。 | **图片水印**<br>支持平铺防盗图、每张唯一内容（`{filename}` `{page}` 等模板变量）、EXIF 方向自动摆正。 |
+| ![PDF 水印](docs/screenshots/pdf-watermark.png) | ![图片水印](docs/screenshots/image-watermark.png) |
+| **文字提取（OCR 双引擎）**<br>「先试一张，满意再批量」：引擎与参数对结果影响很大，先看单张效果再批处理，不会白跑一批。 | **批量任务**<br>队列、并发、逐文件进度与失败原因；单个坏文件只影响它自己，绝不拖垮整批。 |
+| ![OCR](docs/screenshots/ocr.png) | ![批量任务](docs/screenshots/batch.png) |
+
+![设置](docs/screenshots/settings.png)
+
 ---
 
 ## 架构总览
@@ -218,7 +235,12 @@ docforge serve          # 启动内核服务（Electron 用的就是这条）
 │  ├─ make_icon.py          #   生成多尺寸应用图标
 │  └─ cdp.mjs               #   UI 探针（Chrome DevTools Protocol）
 ├─ patches/                 # pnpm 补丁（修上游依赖缺陷，见下）
-└─ docs/                    # 设计方案与各里程碑验收报告
+├─ docs/                    # 设计方案 · 各里程碑验收报告 · 界面截图
+│  ├─ 设计方案.md
+│  ├─ M0/M2-M3/M4/M5/M6/M7/M8-验收报告.md
+│  └─ screenshots/
+├─ CHANGELOG.md
+└─ LICENSE                  # MIT
 ```
 
 ---
