@@ -80,6 +80,12 @@ JPEG_QUALITY = 95
 MAX_RETRIES = 3
 RETRY_BASE_DELAY = 1.2
 
+#: 输出预算的绝对上限。被截断时会一路翻倍到这个值。
+#:
+#: 预算是**天花板而不是花费** —— 模型答完就停，实测把上限从 16384 提到 32768，
+#: 实际输出仍然只有约 12900 tokens，费用没有变化。所以这个上限尽管给足。
+ABSOLUTE_MAX_TOKENS = 65536
+
 #: 全局云端并发上限。官方并发限制很高（flash 为 2500），
 #: 这里限制的是**本机**并发，避免用户一次拖入上千张图时把带宽打满。
 CLOUD_CONCURRENCY = 4
@@ -248,8 +254,11 @@ class DeepSeekVisionEngine(OcrEngine):
 
         http = client or _get_client()
         last_error: Exception | None = None
+        # 本次尝试的输出预算。被截断时会翻倍重试（见下方 finish_reason 的处理）。
+        attempt_max_tokens = max_tokens
 
         for attempt in range(MAX_RETRIES + 1):
+            payload["max_tokens"] = attempt_max_tokens
             try:
                 response = http.post(
                     "/chat/completions",
@@ -262,9 +271,33 @@ class DeepSeekVisionEngine(OcrEngine):
                     choices = data.get("choices") or []
                     if not choices:
                         raise OcrError("模型返回了空结果")
-                    content = (choices[0].get("message") or {}).get("content") or ""
+                    choice = choices[0]
+                    content = (choice.get("message") or {}).get("content") or ""
+                    finish_reason = choice.get("finish_reason")
                     usage = data.get("usage") or {}
                     self._record_usage(usage)
+
+                    if finish_reason == "length":
+                        # 输出预算被耗尽 —— **必须显式处理，不能当成"这张图没有内容"**。
+                        #
+                        # 推理模型先"思考"再作答，而思考 token 也算在 max_tokens 里，
+                        # 所以预算不足时最常见的表现是：思考把额度吃光，content 变成
+                        # 空字符串。若把它当成正常返回，用户看到的就是
+                        # "任务成功、一个字都没识别出来"（实测 8192 预算下 100% 复现）。
+                        reasoning = (usage.get("completion_tokens_details") or {}).get(
+                            "reasoning_tokens"
+                        )
+                        detail = f"，其中思考占用 {reasoning}" if reasoning else ""
+                        last_error = OcrError(
+                            f"模型输出被截断（预算 {attempt_max_tokens} tokens{detail}）"
+                        )
+                        if attempt < MAX_RETRIES:
+                            # 翻倍预算重试：预算是天花板不是花费，提高它不额外扣钱
+                            attempt_max_tokens = min(attempt_max_tokens * 2, ABSOLUTE_MAX_TOKENS)
+                            time.sleep(RETRY_BASE_DELAY)
+                            continue
+                        break
+
                     return content, usage
 
                 # 认证/配额类错误重试没有意义，直接给出可读原因
@@ -446,16 +479,20 @@ class DeepSeekVisionEngine(OcrEngine):
             width, height = source.size
 
             # 裁掉四周空白：模型按**整图**决定缩放比例，空白边距会白吃掉正文分辨率。
-            # 实测一张 2400×3200、表格只占中间 700×900 的照片，裁边前
+            # 实测一张 2400×3200、表格只占中间 900×1080 的照片，裁边前
             # 22px 的字被缩到 9px（认不出来），裁边后不再触发缩放。
             box = content_bbox(source)
             if box is not None:
                 origin_x, origin_y = box[0], box[1]
                 source = source.crop(box)
-                trimmed_note = (
-                    f"已裁掉四周空白（{width}×{height} → {source.width}×{source.height}），"
-                    "让模型把分辨率用在正文上"
-                )
+                kept = (source.width * source.height) / (width * height)
+                # 只裁掉一点点就不必打扰用户 —— 那是内部优化，不是他需要知道的事。
+                # 每张图都挂一条"已裁掉空白"会把真正的警告淹掉。
+                if kept <= 0.85:
+                    trimmed_note = (
+                        f"已裁掉四周空白（{width}×{height} → {source.width}×{source.height}），"
+                        "让模型把分辨率用在正文上"
+                    )
 
         line_height = self._detect_line_height_from(source) if options.tiling != "off" else 0.0
         # 表格这类"结构由列定义"的内容只做横向切分：竖着切会把列结构劈碎，
@@ -584,6 +621,16 @@ class DeepSeekVisionEngine(OcrEngine):
                 ]
             )
 
+        # 一个字、一张表都没有，且**每一次调用都返回了空内容** ——
+        # 这不是"图上没内容"，而是调用出了问题（最典型的是输出预算被思考吃光）。
+        # 必须显式报错：静默返回空结果，用户看到的是绿色的"成功"，
+        # 根本不会想到要去重拍或换个识别模式。
+        if not merged_blocks and not raw_tables and not any(text.strip() for text in raw_texts):
+            raise OcrError(
+                "云端未返回任何内容。可能原因：输出预算被模型的思考过程耗尽，"
+                "或图片过于模糊/空白。请重试；若反复出现，请把图片拍得更清晰。"
+            )
+
         ordered = sort_reading_order(merged_blocks)
 
         # 裁边后所有坐标都是"裁边图坐标系"，这里统一加回偏移量，
@@ -666,7 +713,10 @@ class DeepSeekVisionEngine(OcrEngine):
         per_call = MAX_IMAGE_TOKENS + prompt_tokens
         calls = len(tiles)
         input_tokens = per_call * calls
-        output_tokens = 800 * calls  # 输出长度方差大，取一个中间值
+        # 输出量取决于"思考"而不是内容长度，而且差异极大：实测纯文字模式
+        # 思考仅 240 tokens，表格模式要 7000~11000。按模式分别估，
+        # 免得给用户一个低一个数量级的费用预期。
+        output_tokens = (12_000 if options.mode in JSON_MODES else 2_500) * calls
 
         return {
             "tiles": calls,

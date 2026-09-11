@@ -95,8 +95,8 @@
 
 | 文件 | 说明 |
 |---|---|
-| `DocForge-0.1.0-Setup-x64.exe` | 安装版：可选安装目录、快捷方式、PDF/Word/Excel 文件关联 |
-| `DocForge-0.1.0-Portable-x64.exe` | 便携版：双击即用，数据放在 exe 旁，U 盘换机也能带走预设与历史 |
+| `DocForge-<版本>-Setup-x64.exe` | 安装版：可选安装目录、快捷方式、PDF/Word/Excel 文件关联 |
+| `DocForge-<版本>-Portable-x64.exe` | 便携版：双击即用，数据放在 exe 旁，U 盘换机也能带走预设与历史 |
 
 两版都已内置 Python 内核与全部依赖（PDF 引擎、OCR 模型、Office 自动化），
 **下载后无需再装任何东西**。安装包未做代码签名，SmartScreen 可能提示"未知发布者"，
@@ -128,7 +128,7 @@ pnpm dev
 pnpm dev            # 开发模式（HMR + 内核自动重启）
 pnpm build          # 构建前端产物
 pnpm typecheck      # 类型检查（主进程 + 渲染进程）
-pnpm core:test      # 内核单元测试（346 项）
+pnpm core:test      # 内核单元测试（350 项）
 
 # 打包分发
 pnpm icon           # 生成应用图标（多尺寸 .ico / .png）
@@ -206,7 +206,7 @@ docforge serve          # 启动内核服务（Electron 用的就是这条）
 ## 已知限制
 
 * **云端 OCR 已用真实 DeepSeek API 调优**：图片转 Excel 的单元格准确率
-  从 65% 提到 99.6%（10 个用例，含拍照、密集大表、合并单元格）。
+  从 65% 提到 99.9%（11 个用例，含拍照、密集大表、合并单元格、手机长截图）。
   详见 [`docs/图片转Excel-识别质量报告.md`](docs/图片转Excel-识别质量报告.md)。
 * **字号过小时云端会编造内容且结果不稳定**。实测缩放后字形低于约 12px 时，
   同一张图重复识别三次的准确率可以是 10% / 83% / 79%。此时程序会**明确提醒**

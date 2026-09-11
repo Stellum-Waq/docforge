@@ -380,8 +380,13 @@ def test_currency_cells_are_numeric_not_text() -> None:
 
 
 def test_glyph_ratio_is_sane() -> None:
-    """字形高度换算系数应落在合理区间（检测框含行距，必然大于字形）。"""
-    assert 0.4 <= GLYPH_FROM_BOX_RATIO <= 0.8
+    """字形高度换算系数必须落在合理区间。
+
+    :func:`estimate_line_height` 已经用低分位挑出"单行框"，所以系数接近 1.0。
+    定成 0.6 之类的值会**系统性低估**字号，把识别得好好的图也报成"字太小"
+    （实测用户一张 1264×2800 的截图结果完全正确，界面上却挂着吓人的警告）。
+    """
+    assert 0.8 <= GLYPH_FROM_BOX_RATIO <= 1.2
 
 
 # =========================================================================== #
@@ -425,3 +430,116 @@ def test_summarize_with_warnings_is_a_noop_without_warnings() -> None:
 
     ctx = ActionContext(job_id="j", task_id="t", file_path="a.png", output_path="b.xlsx", params={})
     assert summarize_with_warnings(ctx, "1 张表 · 6 行", []) == "1 张表 · 6 行"
+
+
+# =========================================================================== #
+# 7. 输出预算被"思考"吃光（用户实际踩到的那个缺陷）                              #
+# =========================================================================== #
+
+@pytest.fixture()
+def fake_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    """注入一个假的 API Key。
+
+    测试环境把数据目录重定向到了仓库内的临时路径，里面没有密钥，
+    ``_post`` 会在发请求之前就抛 OcrUnavailable。这里只替换取密钥这一步，
+    请求本身由 MockTransport 拦截，不会真的联网。
+    """
+    monkeypatch.setattr("docforge.ocr.deepseek.get_secret", lambda name: "sk-test-key")
+
+
+def _completion(content: str, *, finish: str, reasoning: int = 0) -> dict:
+    return {
+        "choices": [{"message": {"content": content}, "finish_reason": finish}],
+        "usage": {
+            "prompt_tokens": 1500,
+            "completion_tokens": reasoning + 10,
+            "completion_tokens_details": {"reasoning_tokens": reasoning},
+        },
+    }
+
+
+def _client_with(handler) -> object:
+    import httpx
+
+    return httpx.Client(base_url="https://example.invalid", transport=httpx.MockTransport(handler))
+
+
+def test_truncated_response_retries_with_a_bigger_budget(fake_api_key: None) -> None:
+    """**核心回归**：``finish_reason == "length"`` 时必须提高预算重试。
+
+    ``deepseek-flash`` 是推理模型，思考 token 也算在 ``max_tokens`` 里。
+    实测表格模式下一次思考就要 7000~11000 tokens —— 原来的 8192 预算被思考
+    吃光，``content`` 返回**空字符串**，用户看到的是"任务成功、一个字都没识别出来"。
+    """
+    import json as _json
+
+    import httpx
+
+    from docforge.ocr.deepseek import DeepSeekVisionEngine
+
+    engine = DeepSeekVisionEngine()
+    seen_budgets: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_budgets.append(_json.loads(request.content)["max_tokens"])
+        if len(seen_budgets) == 1:
+            # 第一次：思考把预算吃光，内容为空
+            return httpx.Response(200, json=_completion("", finish="length", reasoning=8192))
+        return httpx.Response(200, json=_completion('{"tables":[],"text":"好"}', finish="stop"))
+
+    content, _usage = engine._post(
+        b"x", "image/png", "prompt",
+        json_mode=True, detail="original", max_tokens=8192,
+        client=_client_with(handler),
+    )
+
+    assert content, "重试后应当拿到内容"
+    assert seen_budgets[0] == 8192
+    assert seen_budgets[1] == 16384, "第二次必须把预算翻倍，否则重试没有意义"
+
+
+def test_persistent_truncation_raises_instead_of_returning_empty(fake_api_key: None) -> None:
+    """一直截断时必须**报错**，不能把空内容当成正常返回。
+
+    静默返回空 → 任务显示"成功"、Excel 是空的，用户根本不会去重拍或换模式。
+    """
+    import json as _json
+
+    import httpx
+
+    from docforge.ocr.base import OcrError
+    from docforge.ocr.deepseek import ABSOLUTE_MAX_TOKENS, DeepSeekVisionEngine
+
+    engine = DeepSeekVisionEngine()
+    budgets: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        budgets.append(_json.loads(request.content)["max_tokens"])
+        return httpx.Response(200, json=_completion("", finish="length", reasoning=8192))
+
+    with pytest.raises(OcrError, match="截断"):
+        engine._post(
+            b"x", "image/png", "prompt",
+            json_mode=True, detail="original", max_tokens=8192,
+            client=_client_with(handler),
+        )
+
+    assert budgets[-1] <= ABSOLUTE_MAX_TOKENS, "预算不应无限增长"
+
+
+def test_default_output_budget_leaves_room_for_reasoning() -> None:
+    """默认预算必须给"思考"留出余量。
+
+    实测：纯文字模式思考仅 240 tokens，表格模式要 7284~10885。
+    默认值若停在 8192，表格模式必然被截断。
+    """
+    from docforge.ocr.base import OcrOptions
+
+    assert OcrOptions().max_tokens >= 16384
+
+
+def test_absolute_budget_cap_is_generous() -> None:
+    """上限是天花板而不是花费（模型答完就停），所以尽管给足。"""
+    from docforge.ocr.deepseek import ABSOLUTE_MAX_TOKENS
+
+    assert ABSOLUTE_MAX_TOKENS >= 32768

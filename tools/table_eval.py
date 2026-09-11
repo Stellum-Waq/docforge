@@ -88,6 +88,30 @@ def _dense_rows(rows: int) -> list[list[str]]:
     return grid
 
 
+def _roster_rows(rows: int) -> list[list[str]]:
+    """造一张"人员名单"式的长表：行多、列少、内容短。
+
+    这类表的 JSON 输出里"行"占绝对多数，因此最容易把输出预算撑爆。
+    """
+    header = ["区队", "班", "男", "女", "姓名", "房间号"]
+    surnames = "赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜"
+    given = ["卓", "焦方", "骐辉", "冰洋", "荣升", "毅", "永好", "凯", "杨一诺", "明轩", "子涵", "雨欣"]
+
+    grid = [header]
+    for index in range(rows):
+        grid.append(
+            [
+                f"{(index // 12) + 1}连",
+                f"{(index % 12) + 1}班",
+                str(8 + (index % 6)),
+                str(index % 3),
+                surnames[index % len(surnames)] + given[index % len(given)],
+                str(200 + (index % 40)),
+            ]
+        )
+    return grid
+
+
 CASES: list[Case] = [
     Case(
         name="标准有框表",
@@ -190,6 +214,19 @@ CASES: list[Case] = [
         font_size=46,
         canvas=(3000, 4000),
         photo=True,
+    ),
+    Case(
+        # 用户实际踩坑的那类图：**手机整屏截图**，又高又窄、行数多。
+        #
+        # 它触发的是一个完全不同的失败模式：表格模式要输出很长的 JSON，
+        # 而 deepseek-flash 是推理模型、**思考 token 也算在 max_tokens 里**，
+        # 于是输出预算被思考吃光、content 返回空字符串 ——
+        # 用户看到的是"任务成功、一个字都没识别出来"。
+        # 行数必须够多才能复现，少了撑不爆预算。
+        name="长名单截图",
+        grid=_roster_rows(34),
+        font_size=24,
+        canvas=(1264, 2800),
     ),
 ]
 

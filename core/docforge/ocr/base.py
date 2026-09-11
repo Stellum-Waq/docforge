@@ -104,8 +104,16 @@ class OcrOptions:
     detail: str = "original"
     # 覆盖默认提示词模板
     prompt_override: str | None = None
-    # 输出上限，防止模型在长文档上被截断
-    max_tokens: int = 8192
+    # 输出上限。
+    #
+    # **这是"天花板"，不是"花费"** —— 模型答完就停，给高了不会多扣钱，
+    # 但给低了会直接把结果毁掉。``deepseek-flash`` 是推理模型：先"思考"再作答，
+    # 而**思考 token 也算在这个上限里**。实测同一张表格图：
+    #     纯文字模式   思考仅    240 tokens
+    #     表格模式     思考需  7284~10885 tokens（强制 JSON 结构会显著拉长思考）
+    # 8192 会被思考吃光，content 直接返回空字符串（finish_reason=length），
+    # 用户看到的是"任务成功、一个字都没识别出来" —— 实测踩过。
+    max_tokens: int = 32768
     # 表格模式：是否把结果也整理成结构化行列表
     extract_tables: bool = True
     # 允许的引擎白名单（为空表示不限制）。用于"敏感文件强制本地"

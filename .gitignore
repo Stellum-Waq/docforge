@@ -3,7 +3,11 @@ node_modules/
 .pnpm-store/
 out/
 dist/
+# electron-builder 的输出目录。用通配符是因为我偶尔会用 release-012 之类的
+# 备用目录并行构建（例如用户正开着上一版、原目录被占用时），
+# 忘了忽略就会把 200+ MB 的安装包提交进仓库。
 release/
+release-*/
 *.tsbuildinfo
 
 # ---- Python 内核 ----
