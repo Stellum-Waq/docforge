@@ -72,13 +72,22 @@
 # 1) 前端依赖（Electron 二进制较大，走国内镜像）
 pnpm install
 
-# 2) Python 内核依赖
+# 2) Python 内核依赖（含 PDF / Office / 本地 OCR，约 300 MB）
 python -m venv core/.venv
-core/.venv/Scripts/python.exe -m pip install -r core/requirements.txt
+core/.venv/Scripts/python.exe -m pip install -r core/requirements.txt        # Windows
+# core/.venv/bin/python -m pip install -r core/requirements.txt              # macOS / Linux
 
 # 3) 开发模式启动（Electron 会自动拉起 Python 内核）
 pnpm dev
 ```
+
+> 只想跑起来看看、不打算改代码的话，直接下安装包更省事：
+> `pnpm package:win` 产出的安装包/便携版里已经带齐了内核与全部依赖。
+
+> 本地离线 OCR 的 ONNX 运行时占了绝大部分体积，用不上的话可以从
+> `core/requirements.txt` 里删掉「本地离线 OCR」那一组（详见文件内注释）；
+> 此时 OCR 走云端（需在设置里填 DeepSeek API Key），其余功能不受影响。
+> 需要跑测试或打安装包时再装 `core/requirements-dev.txt`。
 
 ## 常用命令
 
@@ -86,7 +95,7 @@ pnpm dev
 pnpm dev            # 开发模式（HMR + 内核自动重启）
 pnpm build          # 构建前端产物
 pnpm typecheck      # 类型检查（主进程 + 渲染进程）
-pnpm core:test      # 内核单元测试（288 项）
+pnpm core:test      # 内核单元测试（295 项）
 
 # 打包分发
 pnpm icon           # 生成应用图标（多尺寸 .ico / .png）
@@ -199,6 +208,8 @@ docforge serve          # 启动内核服务（Electron 用的就是这条）
 │     ├─ src/store/         #   工作区文件仓库 + 任务状态仓库
 │     └─ src/styles/        #   设计令牌与动效
 ├─ core/                    # Python 内核
+│  ├─ requirements.txt      #   运行时依赖（装齐即全功能可用）
+│  ├─ requirements-dev.txt  #   测试与打包依赖
 │  └─ docforge/
 │     ├─ __main__.py        #   进程入口（端口协商 + 握手 + 父进程看门狗 + CLI 分发）
 │     ├─ cli.py             #   命令行：actions / run / pipeline / watch / presets / selfcheck

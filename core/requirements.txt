@@ -1,5 +1,16 @@
 # 文枢 DocForge — Python 内核运行依赖
-# 安装：core/.venv/Scripts/python.exe -m pip install -r core/requirements.txt
+#
+# 安装：
+#   python -m venv core/.venv
+#   core/.venv/Scripts/python.exe -m pip install -r core/requirements.txt      # Windows
+#   core/.venv/bin/python     -m pip install -r core/requirements.txt          # macOS / Linux
+#
+# 开发与打包另需 core/requirements-dev.txt。
+#
+# 说明：这里**默认装齐**全部能力，因为 README 的快速开始就是这条命令 ——
+# 如果 PDF / OCR / Office 引擎要再单独装一次，照着 README 走的人会拿到一个
+# "能启动但什么都做不了"的内核。本地 OCR 的 ONNX 运行时约 200 MB，
+# 不需要离线识别的话可以只跳过这一组（见文件末尾的说明）。
 
 # ---- Web 服务层 ----
 fastapi>=0.115
@@ -9,13 +20,35 @@ pydantic-settings>=2.6
 python-multipart>=0.0.12
 
 # ---- 通用 ----
-httpx>=0.27          # DeepSeek Vision 调用（异步）
-aiosqlite>=0.20      # 任务/历史/缓存持久化
-psutil>=6.1          # 系统能力探测
+httpx>=0.27              # DeepSeek Vision 调用
+aiosqlite>=0.20          # 任务 / 历史 / 参数预设 / 结果缓存
+psutil>=6.1              # 系统能力探测与进程回收
 
 # ---- 图像 ----
 Pillow>=11.0
-# 本地 OCR（离线，无需 PyTorch）—— 对应需求 8 的"保留本地部署选项"
-# 首次启用本地 OCR 时按需安装：
-#   rapidocr-onnxruntime onnxruntime opencv-python-headless numpy
-# 体积较大（约 200MB），因此不放在基础依赖里强制安装。
+pillow-heif>=1.0         # HEIC/HEIF：不装的话 iPhone 照片读不了，
+                         # 而 image.watermark / image.ocr 的 accepts 里声明了 .heic
+
+# ---- PDF 与 Office 文档 ----
+PyMuPDF>=1.24            # PDF 水印 / 合并拆分压缩 / 渲染 / 双层可搜索 PDF 的主力引擎
+pypdf>=5.1               # 少量元数据与页面操作
+pdf2docx>=0.5.8          # PDF → Word 版面还原（表格 / 图片 / 分栏）
+python-docx>=1.1         # Word 读写（文档转 PDF、PDF 转 Word 的输出）
+openpyxl>=3.1            # 图片转 Excel、xlsx → PDF
+python-pptx>=1.0         # pptx 文本提取 / 内置渲染
+
+# ---- 本地离线 OCR（对应"保留本地部署 OCR 选项"）----
+# 约 200 MB，完全离线、无需 PyTorch。这是**默认**的识别引擎：
+# 不装的话 OCR 只能走云端，而云端需要 API Key —— 等于离线场景不可用。
+rapidocr-onnxruntime>=1.4
+onnxruntime>=1.20
+opencv-python-headless>=4.10
+numpy>=2.0
+
+# ---- Windows 高保真转换（Word / Excel / PPT COM 自动化）----
+# 非 Windows 平台会自动降级到 LibreOffice 或内置渲染，不需要这一行。
+pywin32>=308; sys_platform == "win32"
+
+# 想省掉 200 MB 的离线 OCR 时，把上面「本地离线 OCR」那四行删掉再安装即可：
+# 此时 OCR 会走 DeepSeek Vision 云端（需在设置里填 API Key），
+# 其余功能（PDF / Office / 水印 / 流水线）全部不受影响。

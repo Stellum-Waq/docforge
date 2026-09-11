@@ -53,7 +53,17 @@
 
 ### 验证
 
-- 内核单元测试 288 项
+- 内核单元测试 295 项
 - 端到端冒烟测试 16 组
 - 打包内核验证 11 组（含双层 PDF / 预设 / 流水线 / CLI）
 - NSIS 安装包与便携版均已启动验证，关闭后无残留进程
+
+### 依赖清单
+
+`core/requirements.txt` 默认装齐全部能力（含本地离线 OCR，约 300 MB），
+保证"照着 README 装完就能用"。`core/requirements-dev.txt` 另外包含测试与打包依赖。
+
+> `core/tests/test_requirements.py` 会**静态扫描代码里 import 的每个第三方包并与
+> 依赖清单比对**，漏写清单会直接测试失败。加这条测试是因为真实踩过：
+> `pillow-heif` 长期没写进任何清单，导致新环境读不了 HEIC（iPhone 照片），
+> 而 `image.watermark` / `image.ocr` 都声明接受 `.heic`。

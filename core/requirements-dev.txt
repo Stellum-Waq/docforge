@@ -1,0 +1,17 @@
+# 文枢 DocForge — 内核开发 / 测试 / 打包依赖
+#
+# 安装：
+#   core/.venv/Scripts/python.exe -m pip install -r core/requirements-dev.txt
+#
+# 只跑程序不需要这些；只在开发、跑测试、打安装包时需要。
+
+-r requirements.txt
+
+pytest>=8.3
+pytest-asyncio>=0.24
+
+# 打包内核（pnpm package:core）
+pyinstaller>=6.10
+pyinstaller-hooks-contrib>=2024.8
+
+ruff>=0.8
