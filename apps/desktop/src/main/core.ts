@@ -1,5 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { EventEmitter } from 'node:events'
 import { join } from 'node:path'
 import { streamSse } from './sse'
@@ -11,6 +11,37 @@ const READY_MARKER = '@@DOCFORGE_READY@@'
 const STARTUP_TIMEOUT_MS = 45_000
 /** 健康探测轮询间隔 */
 const HEALTH_POLL_MS = 400
+
+/**
+ * 便携版：把用户数据放在 exe 旁边，而不是 `%APPDATA%`。
+ *
+ * electron-builder 的 portable target 启动时会设置 `PORTABLE_EXECUTABLE_DIR`
+ * 指向 exe 所在目录。不处理这个变量的话，"便携版"仍然会把任务历史、参数预设、
+ * 结果缓存写进**当前这台机器**的 `%APPDATA%\DocForge` —— 放在 U 盘里换台机器，
+ * 自己的预设和历史就带不走了，与"便携"的预期不符。
+ *
+ * 之所以要真的写一个探针文件：放在只读介质（光盘、只读 U 盘）或
+ * `Program Files` 下时目录是建不出来的。宁可"不够便携"退回默认位置，
+ * 也不能让应用因为写不了数据目录而起不来。
+ */
+function resolvePortableDataDir(): string | null {
+  const portableDir = process.env['PORTABLE_EXECUTABLE_DIR']
+  if (!portableDir) return null
+
+  const target = join(portableDir, 'DocForge数据')
+  const probe = join(target, '.writable-probe')
+  try {
+    mkdirSync(target, { recursive: true })
+    writeFileSync(probe, '')
+    rmSync(probe, { force: true })
+    return target
+  } catch {
+    return null
+  }
+}
+
+/** 便携模式下解析出来的数据目录；非便携版为 null */
+const portableDataDir = resolvePortableDataDir()
 
 export interface CoreProcessOptions {
   /** 仓库根目录 */
@@ -119,7 +150,9 @@ export class CoreProcess extends EventEmitter {
           // 开发期把数据目录留在仓库内，避免开发调试污染用户真实的
           // %APPDATA%\DocForge（任务历史、缓存、预设）。生产环境不设置，
           // 内核会走标准的用户数据目录。
-          ...(this.opts.isDev ? { DOCFORGE_DATA_DIR: join(this.opts.repoRoot, '.docforge-data') } : {})
+          ...(this.opts.isDev ? { DOCFORGE_DATA_DIR: join(this.opts.repoRoot, '.docforge-data') } : {}),
+          // 便携版：数据跟着 exe 走（见 resolvePortableDataDir 的说明）
+          ...(!this.opts.isDev && portableDataDir ? { DOCFORGE_DATA_DIR: portableDataDir } : {})
         }
       }) as ChildProcessWithoutNullStreams
     } catch (err) {
