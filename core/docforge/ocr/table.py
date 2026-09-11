@@ -236,3 +236,95 @@ def guess_header_row(grid: list[list[str]]) -> int:
         if not has_digit and all_short:
             return index
     return 0 if grid else -1
+
+
+# --------------------------------------------------------------------------- #
+# 跨切片的表格片段合并                                                          #
+# --------------------------------------------------------------------------- #
+
+def _cell_key(cell: object) -> str:
+    """单元格的比对键：忽略空白与全角半角差异，但**不折算数字**。
+
+    用 "1,250" 和 "1250" 作为不同的键是有意的：千分位是模型"多写/漏写"的
+    典型表现，折算掉就看不出来了；真正的去重靠下方"整行完全一致"的判断。
+    """
+    import unicodedata
+
+    text = "" if cell is None else str(cell)
+    text = unicodedata.normalize("NFKC", text)
+    return "".join(text.split())
+
+
+def _row_key(row: list[object]) -> tuple[str, ...]:
+    return tuple(_cell_key(cell) for cell in row)
+
+
+def _is_blank_row(row: list[object]) -> bool:
+    return not any(_cell_key(cell) for cell in row)
+
+
+def merge_table_fragments(tables: list[dict[str, object]]) -> list[dict[str, object]]:
+    """把同一张表被切成多块后返回的片段拼回一张。
+
+    ## 为什么需要它
+
+    表格按行切成多块后，每块都会返回一张"自己的表"：表头一样、行不同，
+    而且相邻切片有重叠带，边界那几行会被**两块都识别一遍**。
+    直接把它们当成多张表交给下游，用户拿到的就是同名的两张工作表，
+    内容还互相重复。
+
+    ## 判断"这是一张表的续片"依据
+
+    只看一条：**表头（归一化后）是否一致**。表头是这张表的身份标识，
+    一致就说明是同表续片；不一致就当作真的有多张表，保持原样分开。
+
+    ## 去重策略
+
+    只在**拼接缝**附近去重：拿新片段开头的若干行去比已累积结果尾部的若干行，
+    命中就跳过。刻意不做全局去重 —— 表格里本来就允许出现两行完全相同的
+    数据（例如两笔金额一模一样的记录），全局去重会把真实数据吃掉。
+    """
+    if not tables:
+        return []
+
+    merged: list[dict[str, object]] = []
+
+    for table in tables:
+        headers = [str(c) if c is not None else "" for c in (table.get("headers") or [])]
+        rows = [
+            [str(c) if c is not None else "" for c in row]
+            for row in (table.get("rows") or [])
+            if isinstance(row, list)
+        ]
+
+        target: dict[str, object] | None = None
+        if merged and headers and _row_key(headers) == _row_key(
+            [str(c) if c is not None else "" for c in (merged[-1].get("headers") or [])]
+        ):
+            target = merged[-1]
+
+        if target is None:
+            merged.append({"title": table.get("title") or "", "headers": headers, "rows": rows, "spans": table.get("spans") or []})
+            continue
+
+        tail = target["rows"]
+        assert isinstance(tail, list)
+        tail_keys = [_row_key(row) for row in tail if not _is_blank_row(row)]
+
+        # 只比对新片段的前几行与已累积结果的尾部几行（重叠带通常只有 1~3 行）
+        window = min(len(tail_keys), len(rows), 5)
+        skip = 0
+        for size in range(window, 0, -1):
+            if tail_keys[-size:] == _row_key_all(rows[:size]):
+                skip = size
+                break
+
+        for row in rows[skip:]:
+            if not _is_blank_row(row):
+                tail.append(row)
+
+    return merged
+
+
+def _row_key_all(rows: list[list[str]]) -> list[tuple[str, ...]]:
+    return [_row_key(row) for row in rows]

@@ -16,7 +16,15 @@ from pathlib import Path
 from typing import Any
 
 from ..ocr import OcrError, OcrOptions, recognize
-from .base import ActionContext, ActionError, ActionSpec, TaskResult, atomic_write, register
+from .base import (
+    ActionContext,
+    ActionError,
+    ActionSpec,
+    TaskResult,
+    atomic_write,
+    register,
+    summarize_with_warnings,
+)
 
 #: 各输出格式对应的扩展名与写出器
 OUTPUT_FORMATS = {
@@ -209,7 +217,10 @@ def _handler(ctx: ActionContext) -> TaskResult:
     if result.usage.get("estimatedCostUsd"):
         summary += f" · ${result.usage['estimatedCostUsd']:.4f}"
 
-    return TaskResult(output_path=str(target), message=summary)
+    return TaskResult(
+        output_path=str(target),
+        message=summarize_with_warnings(ctx, summary, result.warnings),
+    )
 
 
 register(

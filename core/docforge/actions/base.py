@@ -310,3 +310,34 @@ def atomic_write(target: Path, writer: Callable[[Path], None]) -> None:
                 tmp.unlink()
             except OSError:
                 pass
+
+
+#: 摘要里最多展示多少字（提醒会全部写进日志，摘要只放最重要的一条）
+_SUMMARY_WARNING_LIMIT = 46
+
+
+def summarize_with_warnings(ctx: ActionContext, summary: str, warnings: list[str]) -> str:
+    """把识别引擎的提醒写进任务摘要，并记录到任务日志。
+
+    ## 为什么不能把 warnings 丢掉
+
+    云端 OCR 会给出"字号偏小、结果可能不准""已裁掉空白""表格跨切片已合并"
+    这类提醒。它们过去**只存在于 OcrResult 里**，而动作返回的 ``TaskResult``
+    只带一句摘要 —— 于是提醒被静默丢弃，用户看到的是一个绿色的"成功"。
+
+    对"图片转 Excel"来说这尤其危险：模型认不清的时候**不会报错，
+    而是编出看起来很合理的内容**（实测把"复印纸"读成了"密封圈"）。
+    任务显示成功、数据其实是错的，比任务失败糟糕得多 ——
+    用户不会去复查一份显示成功的结果。所以提醒必须一路透到界面上。
+    """
+    for line in warnings:
+        ctx.log(f"提醒：{line}")
+
+    if not warnings:
+        return summary
+
+    head = warnings[0]
+    if len(head) > _SUMMARY_WARNING_LIMIT:
+        head = head[:_SUMMARY_WARNING_LIMIT] + "…"
+    extra = f"（共 {len(warnings)} 条）" if len(warnings) > 1 else ""
+    return f"{summary} · ⚠ {head}{extra}"

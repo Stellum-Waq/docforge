@@ -53,11 +53,16 @@ from .base import (
     TextBlock,
 )
 from .prompts import JSON_MODES, PROMPT_VERSION, build_prompt
+from .table import merge_table_fragments
 from .tiling import (
+    GLYPH_FROM_BOX_RATIO,
+    MIN_RELIABLE_GLYPH_PX,
     UNKNOWN_LINE_RATIO,
     estimate_line_height,
     merge_tile_blocks,
+    model_scale,
     plan_tiles,
+    sanity_line_height,
     sort_reading_order,
 )
 
@@ -350,11 +355,40 @@ class DeepSeekVisionEngine(OcrEngine):
     # 主流程                                                            #
     # ------------------------------------------------------------------ #
 
+    def _detect_line_height_from(self, image: Image.Image) -> float:
+        """在**已裁边的图片**上测量行高。
+
+        裁边之后坐标系变了，必须重新测 —— 用原图的测量值会把切片规划带偏。
+        先转成临时文件是因为本地引擎的接口收的是路径；裁边后的图通常小得多，
+        这一次临时写盘的开销可以忽略。
+        """
+        import tempfile
+
+        height = image.height
+        handle = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        try:
+            handle.close()
+            image.save(handle.name)
+            return self._detect_line_height(Path(handle.name))
+        except Exception:  # noqa: BLE001 - 测量失败退回按图高估算
+            return sanity_line_height(0.0, height)
+        finally:
+            try:
+                Path(handle.name).unlink(missing_ok=True)
+            except OSError:
+                pass
+
     def _detect_line_height(self, path: Path) -> float:
-        """尽量用本地 OCR 实测行高；本地引擎不可用时退回按图高估算。
+        """尽量用本地 OCR 实测行高；不可用或明显不可信时退回按图高估算。
 
         用实测值而不是猜：切片是否必要、切多细，全都建立在这个数字上。
+        但**实测值本身也可能不可信** —— 实测遇到过本地引擎在一张干净的
+        表格图上返回 0 个文本框。这种情况必须当作"没测到"，
+        而不是把 0 当成"字极小"的证据：后者会把一张小图切成两半。
         """
+        with Image.open(path) as image:
+            height = image.height
+
         try:
             from .local import get_engine as get_local
 
@@ -362,13 +396,13 @@ class DeepSeekVisionEngine(OcrEngine):
             if local.availability()[0]:
                 blocks = local.detect_lines(path)
                 measured = estimate_line_height(blocks)
-                if measured > 0:
-                    return measured
+                # 框太少（例如整图只有 1~2 个框）说明漏检严重，中位数没有代表性
+                if measured > 0 and len(blocks) >= 3:
+                    return sanity_line_height(measured, height)
         except Exception:  # noqa: BLE001 - 探测失败不该影响主流程
             pass
 
-        with Image.open(path) as image:
-            return max(6.0, image.height * UNKNOWN_LINE_RATIO)
+        return sanity_line_height(0.0, height)
 
     def recognize(
         self,
@@ -401,12 +435,33 @@ class DeepSeekVisionEngine(OcrEngine):
         if progress:
             progress(8, "分析版面")
 
+        from ..imaging import content_bbox
+
+        origin_x = 0
+        origin_y = 0
+        trimmed_note = ""
+
         with Image.open(path) as opened:
             source = ImageOps.exif_transpose(opened).convert("RGB")
             width, height = source.size
 
-        line_height = self._detect_line_height(path) if options.tiling != "off" else 0.0
-        tiles = plan_tiles(width, height, line_height, mode=options.tiling)
+            # 裁掉四周空白：模型按**整图**决定缩放比例，空白边距会白吃掉正文分辨率。
+            # 实测一张 2400×3200、表格只占中间 700×900 的照片，裁边前
+            # 22px 的字被缩到 9px（认不出来），裁边后不再触发缩放。
+            box = content_bbox(source)
+            if box is not None:
+                origin_x, origin_y = box[0], box[1]
+                source = source.crop(box)
+                trimmed_note = (
+                    f"已裁掉四周空白（{width}×{height} → {source.width}×{source.height}），"
+                    "让模型把分辨率用在正文上"
+                )
+
+        line_height = self._detect_line_height_from(source) if options.tiling != "off" else 0.0
+        # 表格这类"结构由列定义"的内容只做横向切分：竖着切会把列结构劈碎，
+        # 每块都只剩部分列、表头还对不上，实测会导致整列丢失。
+        layout = "rows" if options.mode == "table" else "grid"
+        tiles = plan_tiles(source.width, source.height, line_height, mode=options.tiling, layout=layout)
 
         prompt = build_prompt(
             options.mode, language=options.language, override=options.prompt_override
@@ -418,6 +473,21 @@ class DeepSeekVisionEngine(OcrEngine):
             warnings.append(
                 f"检测到字号偏小（约 {line_height:.0f}px），已自动切成 {len(tiles)} 块分别识别以保证准确率"
             )
+
+        # 送进模型前会缩放到约 1300 等效像素。这里把"检测框高度"折算成
+        # "字形高度"再判断可辨识度 —— 框高包含行距，直接用会高估近一倍，
+        # 于是该提醒的不提醒。见 tiling.GLYPH_FROM_BOX_RATIO 的说明。
+        scaled_glyph = line_height * GLYPH_FROM_BOX_RATIO * model_scale(source.width, source.height) if line_height else 0
+        if 0 < scaled_glyph < MIN_RELIABLE_GLYPH_PX:
+            warnings.append(
+                f"字号偏小（缩放后字形约 {scaled_glyph:.0f}px，低于可靠的 {MIN_RELIABLE_GLYPH_PX:.0f}px），"
+                "识别结果可能不准确甚至出现编造内容 —— 建议把表格拍得更近、更清晰后重试"
+            )
+
+        # 把影响正确性的提醒排在最前面：摘要只展示第一条，
+        # 而"裁掉空白"这类是成功的优化说明，不该挤掉"结果可能不准"的警告。
+        if trimmed_note:
+            warnings.append(trimmed_note)
 
         # ---- 3. 逐块识别 ----
         tile_height = height
@@ -515,6 +585,34 @@ class DeepSeekVisionEngine(OcrEngine):
             )
 
         ordered = sort_reading_order(merged_blocks)
+
+        # 裁边后所有坐标都是"裁边图坐标系"，这里统一加回偏移量，
+        # 让调用方拿到的始终是**原图坐标** —— 否则界面上的预览框会整体偏移。
+        if origin_x or origin_y:
+            ordered = [
+                TextBlock(
+                    text=block.text,
+                    box=(
+                        block.box[0] + origin_x,
+                        block.box[1] + origin_y,
+                        block.box[2] + origin_x,
+                        block.box[3] + origin_y,
+                    ),
+                    confidence=block.confidence,
+                )
+                for block in ordered
+            ]
+
+        # 表格被切成多块时，每块都会返回"自己的那张表"（表头相同、行不同，
+        # 重叠带那几行还会重复）。这里按表头把它们拼回一张，
+        # 否则用户拿到的是同名且互相重复的好几张工作表。
+        if raw_tables and len(tiles) > 1:
+            merged_tables = merge_table_fragments(raw_tables)
+            if len(merged_tables) < len(raw_tables):
+                warnings.append(
+                    f"表格跨 {len(raw_tables)} 个切片，已按表头合并为 {len(merged_tables)} 张"
+                )
+            raw_tables = merged_tables
 
         result = OcrResult(
             blocks=ordered,

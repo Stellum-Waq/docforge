@@ -47,12 +47,27 @@ MODEL_MAX_SIDE = 1300
 MODEL_BUDGET_PX = MODEL_MAX_SIDE * MODEL_MAX_SIDE
 # 缩放后文字行高低于此值就容易误识。CJK 字形在 12px 以下辨识度急剧下降。
 MIN_READABLE_LINE_PX = 12.0
+#: 检测框高度换算成"字形高度"的经验系数。
+#:
+#: OCR 的行框包含行距，不等于字形本身的高度。实测两张表：字号 46px 的
+#: 框高 88、字号 22px 的框高 42，比值都在 1.9 左右 —— 乘以 0.6 即得字形高度。
+GLYPH_FROM_BOX_RATIO = 0.6
+#: 触发"字号偏小、结果可能不准"提醒的门槛。
+#:
+#: 刻意比 MIN_READABLE_LINE_PX 严格：两边的代价不对称 ——
+#: 误报只是让用户多看一句提示；漏报则是**静默交付编造的数据**
+#: （模型认不清时会编出看起来合理的内容，任务却是绿色的"成功"）。
+#: 因此宁可多提醒。实测 17px 时准确率 98%，11px 时掉到 83%，门槛落在两者之间。
+MIN_RELIABLE_GLYPH_PX = 15.0
 # 相邻切片的默认重叠比例（相对切片边长）
 DEFAULT_OVERLAP = 0.12
 # 切片数量上限：防止极小字号导致切成几百块（既慢又贵）
 MAX_TILES = 64
 # 行高未知时的保守估计：按图片高度的这个比例假定一行文字的高度
 UNKNOWN_LINE_RATIO = 0.012
+# 行高的合理区间（相对图片高度）。超出这个范围说明测量不可信。
+MIN_LINE_RATIO = 0.004
+MAX_LINE_RATIO = 0.2
 # 判断"同一行"的纵向容差系数（相对中位行高）
 ROW_TOLERANCE = 0.65
 
@@ -107,6 +122,28 @@ def max_tile_side(line_height: float) -> int:
     return max(64, int(MODEL_MAX_SIDE * line_height / MIN_READABLE_LINE_PX))
 
 
+def sanity_line_height(line_height: float, height: int) -> float:
+    """把行高夹到合理区间；明显不可信时按图片高度重新估一个。
+
+    行高是切片决策的**唯一**输入，所以它一旦失真，后果是灾难性的。
+    实测踩过：本地 OCR 在某张干净表格图上返回 0 个文本框 →
+    ``estimate_line_height`` 得 0 → 回退公式算出 4.25px →
+    被 ``max(6.0, ...)`` 抬到 6px → 判定"字号极小"，把一张 784×354 的图
+    **竖着切成两半**。表格被从中间劈开，模型每半张只看到 3 列，
+    于是"四季度""全年合计"两列整列丢失，同一张表还变成了两张工作表。
+
+    这里做两层保护：
+      * 相对图片高度夹到 [MIN_LINE_RATIO, MAX_LINE_RATIO]；
+      * 完全测不到（<=0）时用回退比例，但同样受上面的夹取约束。
+    """
+    if height <= 0:
+        return max(1.0, line_height)
+    low = max(2.0, height * MIN_LINE_RATIO)
+    high = max(low, height * MAX_LINE_RATIO)
+    value = line_height if line_height > 0 else height * UNKNOWN_LINE_RATIO
+    return min(high, max(low, value))
+
+
 def plan_tiles(
     width: int,
     height: int,
@@ -114,26 +151,40 @@ def plan_tiles(
     *,
     mode: str = "auto",
     overlap: float = DEFAULT_OVERLAP,
+    layout: str = "grid",
 ) -> list[Tile]:
     """规划切片。
 
     :param line_height: 图片中一个文字行的像素高度。传 0 表示未知，会按图片高度估算。
     :param mode: ``off`` 强制整图；``always`` 强制按尺寸上限切；``auto`` 按字号判断。
+    :param layout: ``grid`` 双向切；``rows`` **只做横向切分**（保持整幅宽度）。
+
+        ``rows`` 是给表格这类"结构由列定义"的图片用的。表格一旦被竖着切开，
+        每一块都只剩部分列、而且表头对不上，合并时几乎无法还原 ——
+        实测就是整列整列地丢。只做横向切分时，每块都是完整的列结构，
+        合并只需要把行拼起来（见 :func:`docforge.ocr.table.merge_table_fragments`）。
     """
     if width <= 0 or height <= 0:
         raise OcrError("图片尺寸非法")
 
-    if mode == "off":
-        return [Tile(0, 0, width, height, (0, 0, width, height))]
+    whole = [Tile(0, 0, width, height, (0, 0, width, height))]
 
-    if line_height <= 0:
-        line_height = max(6.0, height * UNKNOWN_LINE_RATIO)
+    if mode == "off":
+        return whole
+
+    # 模型根本不会缩小这张图 —— 缩放不损失任何可读性，切片只会把版面/表格切断。
+    # 这条判断必须放在字号之前：字号是"估"出来的，而缩放比例是**算**出来的，
+    # 后者永远不会错。实测正是漏了这条才把一张 784×354 的小图切成两半。
+    if mode != "always" and model_scale(width, height) >= 1.0:
+        return whole
+
+    line_height = sanity_line_height(line_height, height)
 
     side_limit = max_tile_side(line_height)
 
     # 字够大时整图即可，避免无谓的多次调用（省钱也更快）
     if mode != "always" and side_limit >= max(width, height):
-        return [Tile(0, 0, width, height, (0, 0, width, height))]
+        return whole
 
     if mode == "always":
         # 强制切片时不能只依赖字号推导的上限 —— 字大时那个上限可能超过整图尺寸，
@@ -142,6 +193,10 @@ def plan_tiles(
 
     cols = max(1, -(-width // side_limit))
     rows = max(1, -(-height // side_limit))
+
+    if layout == "rows":
+        # 只做横向切分：宽度必须完整保留，否则表格的列结构就毁了
+        cols = 1
 
     # 切片过多说明字号极小（例如整页缩略图）。此时切得再细也认不出来，
     # 不如限制数量并在上层给出提示，避免用户白等与白花钱。
@@ -177,15 +232,37 @@ def plan_tiles(
 
 
 def estimate_line_height(blocks: list[TextBlock]) -> float:
-    """用本地 OCR 的结果估计中位行高，作为切片决策的输入。
+    """用本地 OCR 的检测框估计"一行文字占多高"，作为切片决策的输入。
 
-    用中位数而不是平均值：文档里常有标题、表格线、印章等异常高/矮的框，
-    平均值会被它们带偏。
+    ## 为什么不能直接用中位数
+
+    中位数在**正文文档**上很稳，但在**表格**上会明显偏大：表格行距紧，
+    检测框常常把相邻两三行并成一个框。实测一张 26 行表格的框高分布：
+
+        最小 34  p10 42  p25 70  中位 94  p75 118   实际行距 42
+
+    中位数 94 是真实行距的 **2.2 倍**。这会一路传导到切片决策 ——
+    字号被高估 2 倍，切片边长上限就大 2 倍，于是"本来该切"的图不切，
+    整图被模型大幅缩小后小字全部糊掉（实测因此把整列数据读错）。
+
+    所以这里做**自适应**：分布很紧说明框就是单行，用中位数最稳；
+    分布很宽说明有框跨了多行，改用低分位数（更接近真实行距）。
+
+    取向是"宁可低估"：低估只会多切几块（多花一点点钱、有上限保护），
+    高估却会让小字彻底认不出来，而且模型认不出时**不会报错，会编**。
     """
     heights = sorted(b.line_height for b in blocks if b.text.strip() and b.line_height > 0)
     if not heights:
         return 0.0
-    return float(heights[len(heights) // 2])
+
+    count = len(heights)
+    median = float(heights[count // 2])
+    p10 = float(heights[max(0, int(count * 0.10))])
+
+    # 分布松散（中位数超过低分位的两倍）→ 判定存在跨行框，用低分位
+    if median > p10 * 2:
+        return p10
+    return median
 
 
 def merge_tile_blocks(

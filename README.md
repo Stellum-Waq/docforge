@@ -128,7 +128,7 @@ pnpm dev
 pnpm dev            # 开发模式（HMR + 内核自动重启）
 pnpm build          # 构建前端产物
 pnpm typecheck      # 类型检查（主进程 + 渲染进程）
-pnpm core:test      # 内核单元测试（295 项）
+pnpm core:test      # 内核单元测试（346 项）
 
 # 打包分发
 pnpm icon           # 生成应用图标（多尺寸 .ico / .png）
@@ -139,6 +139,7 @@ pnpm package:win    # 一条龙：图标 + 内核 + 安装包/便携版 → apps
 pnpm smoke                                          # 端到端冒烟测试（起真实内核跑完整流程）
 pnpm probe                                          # 列出已注册动作与引擎可用性
 core/.venv/Scripts/python.exe tools/test_packaged.py  # 验证打包后的内核可执行文件
+core/.venv/Scripts/python.exe tools/table_eval.py     # 图片转 Excel 识别质量评测（需真实 API Key）
 
 # UI 探针（需应用以 DOCFORGE_DEBUG_PORT=9222 启动）
 node tools/cdp.mjs text                 # 导出页面可见文本
@@ -204,8 +205,13 @@ docforge serve          # 启动内核服务（Electron 用的就是这条）
 
 ## 已知限制
 
-* **云端 OCR 未经真实 API Key 联调** —— 请求构造与错误处理按官方文档实现并有测试
-  覆盖，但没有跑过真实调用。这是当前最主要的验证缺口。
+* **云端 OCR 已用真实 DeepSeek API 调优**：图片转 Excel 的单元格准确率
+  从 65% 提到 99.6%（10 个用例，含拍照、密集大表、合并单元格）。
+  详见 [`docs/图片转Excel-识别质量报告.md`](docs/图片转Excel-识别质量报告.md)。
+* **字号过小时云端会编造内容且结果不稳定**。实测缩放后字形低于约 12px 时，
+  同一张图重复识别三次的准确率可以是 10% / 83% / 79%。此时程序会**明确提醒**
+  用户「建议把表格拍得更近」并把提醒写进任务摘要 —— 不会把不确定的结果
+  当成成功静默交付。
 * PDF 加密 / 解密 / 权限设置尚未实现。
 * 未安装 Office 且未安装 LibreOffice 时，Excel/PPT 转 PDF 不可用
   （内置渲染不做 xlsx/pptx —— 靠文字提取没有意义，会丢失全部结构）。

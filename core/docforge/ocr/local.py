@@ -43,6 +43,48 @@ _INFER_LOCK = threading.Lock()
 _DETECT_MAX_SIDE = 1600
 
 
+def _looks_like_point(value: Any) -> bool:
+    """判断 ``value`` 是否形如一个坐标点 ``[x, y]``。"""
+    return (
+        isinstance(value, (list, tuple))
+        and len(value) >= 2
+        and isinstance(value[0], (int, float))
+        and not isinstance(value[0], bool)
+    )
+
+
+def _box_from_detect_item(item: Any) -> Any | None:
+    """从检测阶段的输出项里取出多边形。
+
+    ## 为什么要做这层兼容（这是一个真实缺陷的修复）
+
+    RapidOCR 在不同参数下返回的结构**不一样**：
+
+    * ``use_rec=True``  → ``[(box, text, score), ...]``
+    * ``use_rec=False`` → ``[box, box, ...]``（只有多边形，没有文本与分数）
+
+    ``detect_lines`` 出于提速只做检测（``use_rec=False``），却按"三元组"去解析，
+    于是 ``box`` 拿到了第一个点、``text`` 拿到了第二个点、
+    ``score`` 拿到了第三个点 —— 解析出来的"文本"是个坐标，
+    再被 :func:`_boxes_to_blocks` 当非法数据丢掉。
+
+    结果是 **``detect_lines`` 永远返回 0 个框**。它的下游是"切片要不要切、
+    切多细"的唯一输入，所以这个 bug 让整套自适应切片一直在用**猜**的字号做决策：
+    实测表现为一张 784×354 的干净表格被判成"字号 6px"、竖着切成两半，
+    整列数据丢失。
+    """
+    if not item:
+        return None
+    first = item[0]
+    # item 本身就是多边形：[ [x,y], [x,y], ... ]
+    if _looks_like_point(first):
+        return item
+    # item 是 (box, text, score)：取第 0 项
+    if isinstance(first, (list, tuple, np.ndarray)):
+        return first
+    return None
+
+
 def _load_engine() -> Any:
     """惰性加载引擎。模型加载约 0.5s，不该拖慢内核启动。"""
     global _ENGINE
@@ -182,12 +224,17 @@ class RapidOcrEngine(OcrEngine):
         if progress:
             progress(30, "版面分析完成")
 
-        # 检测阶段只产出框，给个占位文本，行高计算即可正常工作
-        raw = _boxes_to_blocks(
-            [[item[0], "·", item[2] if len(item) > 2 else 1.0] for item in (result or [])],
-            scale=scale,
-        )
-        return raw
+        # 检测阶段只产出框，给个占位文本，行高计算即可正常工作。
+        # 注意用 _box_from_detect_item 做结构兼容 —— 纯检测模式下 RapidOCR
+        # 返回的是裸多边形而不是 (box, text, score)，直接按下标取会取到坐标点，
+        # 最终一个框都留不下。详见该函数的说明。
+        pairs: list[list[Any]] = []
+        for item in result or []:
+            box = _box_from_detect_item(item)
+            if box is not None:
+                pairs.append([box, "·", 1.0])
+
+        return _boxes_to_blocks(pairs, scale=scale)
 
     # ------------------------------------------------------------------ #
     # 完整识别                                                            #
